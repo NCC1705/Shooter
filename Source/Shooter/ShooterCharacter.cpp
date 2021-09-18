@@ -47,7 +47,9 @@ AShooterCharacter::AShooterCharacter() ://initialize values with an initialize l
 	//Automatic fire variables; remember to make this greater than crosshair interpolation time 0.05f
 	AutomaticFireRate(0.1f),
 	bShouldFire(true),
-	bFireButtonPressed(false)
+	bFireButtonPressed(false),
+	//Item trace variables
+	bShouldTraceForItems(false)
 
 	
 {
@@ -376,6 +378,44 @@ bool AShooterCharacter::TraceUnderCrosshairs(FHitResult& OutHitResult, FVector& 
 	return false;
 }
 
+void AShooterCharacter::TraceForItems()
+{
+	if (bShouldTraceForItems)
+	{
+		FHitResult ItemTraceResult;
+		FVector HitLocation;//dummy var for trace - we don't use it here
+		TraceUnderCrosshairs(ItemTraceResult, HitLocation);
+		if (ItemTraceResult.bBlockingHit)
+		{
+			AItem* HitItem = Cast<AItem>(ItemTraceResult.Actor);//UE5 ItemTraceResult.GetActor()
+			if (HitItem && HitItem->GetPickupWidget())
+			{
+				//Show Item's pickup widget
+				HitItem->GetPickupWidget()->SetVisibility(true);				
+			}	
+			//we hit an AItem last frame
+			if (TraceHitItemLastFrame)
+			{
+				if (HitItem != TraceHitItemLastFrame)//we are hitting a different item this frame, or AItem is null
+				{
+					TraceHitItemLastFrame->GetPickupWidget()->SetVisibility(false);
+				}
+			}
+			//Store a reference to hit item for next frame
+			TraceHitItemLastFrame = HitItem;
+			//	cast fails:		TraceHitItemLastFrame = nullptr 
+			//  cast suceeds:	TraceHitItemLastFrame = AItem
+			
+		}
+	}
+	else if (TraceHitItemLastFrame)//we hit an AItem last frame
+	{
+		//no longer ovelapping items
+		//item last frame should not show widget
+		TraceHitItemLastFrame->GetPickupWidget()->SetVisibility(false);
+	}
+}
+
 // Called every frame
 void AShooterCharacter::Tick(float DeltaTime)
 {
@@ -390,18 +430,10 @@ void AShooterCharacter::Tick(float DeltaTime)
 	//Calculate crosshair spread multiplier
 	CalculateCrosshairSpread(DeltaTime);
 	
-	FHitResult ItemTraceResult;
-	FVector HitLocation;//dummy var for trace - we don't use it here
-	TraceUnderCrosshairs(ItemTraceResult, HitLocation);
-	if (ItemTraceResult.bBlockingHit)
-	{
-		AItem* HitItem = Cast<AItem>(ItemTraceResult.Actor);//UE5 ItemTraceResult.GetActor()
-		if (HitItem &&HitItem->GetPickupWidget())
-		{
-			//Show Item's pickup widget
-			HitItem->GetPickupWidget()->SetVisibility(true);
-		}
-	}
+	// Check OverlappedItemCount, then trace for items
+	TraceForItems();
+
+	
 
 }
 
@@ -440,6 +472,22 @@ void AShooterCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCo
 float AShooterCharacter::GetCrosshairSpreadMultiplier() const
 {
 	return CrosshairSpreadMultiplier;
+}
+
+void AShooterCharacter::IncrementOverlappedItemCount(int8 Amount)
+{
+	//safety against negative numbers, strange; do they not update properly, is this unreliable?
+	if (OverlappedItemCount + Amount <= 0)
+	{
+		OverlappedItemCount = 0;
+		bShouldTraceForItems = false;
+	}
+	else //OverlappedItemCount + Amount > 0
+	{
+		OverlappedItemCount += Amount;
+		bShouldTraceForItems = true;
+	}
+
 }
 
 
