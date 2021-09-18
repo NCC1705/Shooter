@@ -39,4 +39,6 @@ private:
 
 
 public://GetSet
+	FORCEINLINE UWidgetComponent* GetPickupWidget() const { return PickupWidget; }
+
 };

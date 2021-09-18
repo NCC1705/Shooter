@@ -54,7 +54,7 @@ protected:
 	/** Called when the fire button is pressed */
 	void FireWeapon();
 
-	bool GetBeamEndLocation(const FVector& MuzzleSocletLocation, FVector& OutBeamLocation);
+	bool GetBeamEndLocation(const FVector& MuzzleSocketLocation, FVector& OutBeamLocation);
 	//Out = input param to be changed
 
 	/** Set bAiming to true or false with button press */
@@ -81,6 +81,9 @@ protected:
 
 	UFUNCTION()
 	void AutoFireReset();//timer callback - must be UFUNCTION
+
+	/** Line trace for items under the crosshairs */
+	bool TraceUnderCrosshairs(FHitResult& OutHitResult, FVector& OutHitLocation);
 
 public:
 	// Called every frame
