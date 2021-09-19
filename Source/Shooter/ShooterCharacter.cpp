@@ -12,7 +12,7 @@
 #include "Particles/ParticleSystemComponent.h"
 #include "Item.h"
 #include "Components/WidgetComponent.h"
-
+#include "Weapon.h"
 // Sets default values
 AShooterCharacter::AShooterCharacter() ://initialize values with an initialize list
 	//Base rates for turning/looking up
@@ -92,6 +92,9 @@ void AShooterCharacter::BeginPlay()
 		CameraDefaultFOV = GetFollowCamera()->FieldOfView;
 		CameraCurrentFOV = CameraDefaultFOV;
 	}
+
+	//Spawn the default weapon and attach it to the mesh
+	SpawnDefaultWeapon();
 
 	//UE_LOG Examples:
 	/*UE_LOG(LogTemp, Warning, TEXT("BeginPlay() called!"));//TEXT macro encoded in unicode - more characters
@@ -413,6 +416,46 @@ void AShooterCharacter::TraceForItems()
 		//no longer ovelapping items
 		//item last frame should not show widget
 		TraceHitItemLastFrame->GetPickupWidget()->SetVisibility(false);
+	}
+}
+
+void AShooterCharacter::SpawnDefaultWeapon()
+{
+	//Check the TSubclass variable
+	if (DefaultWeaponClass)
+	{
+		//Spawn the Weapon
+		AWeapon* DefaultWeapon = GetWorld()->SpawnActor<AWeapon>(DefaultWeaponClass);
+		//Get the Hand Socket
+		const USkeletalMeshSocket* HandSocket = GetMesh()->GetSocketByName(FName("RightHandSocket"));
+		if (HandSocket)
+		{
+			//Attach the Weapon to the hand socket RightHandSocket
+			HandSocket->AttachActor(DefaultWeapon, GetMesh());
+		}
+		//Set equipped weapon to the newly spawned weapon
+		EquippedWeapon = DefaultWeapon;
+	}
+
+}
+
+void AShooterCharacter::EquipWeapon(AWeapon* WeaponToEquip)
+{
+	if (WeaponToEquip)
+	{	
+
+
+
+
+		//Get the Hand Socket
+		const USkeletalMeshSocket* HandSocket = GetMesh()->GetSocketByName(FName("RightHandSocket"));
+		if (HandSocket)
+		{
+			//Attach the Weapon to the hand socket RightHandSocket
+			HandSocket->AttachActor(WeaponToEquip, GetMesh());
+		}
+		//Set equipped weapon to the newly spawned weapon
+		EquippedWeapon = WeaponToEquip;
 	}
 }
 
