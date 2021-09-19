@@ -13,6 +13,9 @@
 #include "Item.h"
 #include "Components/WidgetComponent.h"
 #include "Weapon.h"
+#include "Components/SphereComponent.h"//for weapon equip disable collision
+#include "Components/BoxComponent.h"//for weapon equip disable collision
+
 // Sets default values
 AShooterCharacter::AShooterCharacter() ://initialize values with an initialize list
 	//Base rates for turning/looking up
@@ -63,6 +66,11 @@ AShooterCharacter::AShooterCharacter() ://initialize values with an initialize l
 	CameraBoom->bUsePawnControlRotation = true;//rotate the arm based on the controller
 	CameraBoom->SocketOffset = FVector(0.f, 50.f, 70.f);
 
+	//pleasant when moving, detrimental when aiming
+	//CameraBoom->bEnableCameraLag = true;
+	//CameraBoom->bEnableCameraRotationLag = true;
+	//CameraBoom->CameraLagSpeed = 2.f;
+	//CameraBoom->CameraRotationLagSpeed = 2.f;
 
 	// Create a follow camera
 	FollowCamera = CreateDefaultSubobject<UCameraComponent>(TEXT("FollowCamera"));
@@ -93,8 +101,8 @@ void AShooterCharacter::BeginPlay()
 		CameraCurrentFOV = CameraDefaultFOV;
 	}
 
-	//Spawn the default weapon and attach it to the mesh
-	SpawnDefaultWeapon();
+	//Spawn the default weapon and equip it (attach it to the mesh)
+	EquipWeapon (SpawnDefaultWeapon());
 
 	//UE_LOG Examples:
 	/*UE_LOG(LogTemp, Warning, TEXT("BeginPlay() called!"));//TEXT macro encoded in unicode - more characters
@@ -390,22 +398,22 @@ void AShooterCharacter::TraceForItems()
 		TraceUnderCrosshairs(ItemTraceResult, HitLocation);
 		if (ItemTraceResult.bBlockingHit)
 		{
-			AItem* HitItem = Cast<AItem>(ItemTraceResult.Actor);//UE5 ItemTraceResult.GetActor()
-			if (HitItem && HitItem->GetPickupWidget())
+			TraceHitItem = Cast<AItem>(ItemTraceResult.Actor);//UE5 ItemTraceResult.GetActor()
+			if (TraceHitItem && TraceHitItem->GetPickupWidget())
 			{
 				//Show Item's pickup widget
-				HitItem->GetPickupWidget()->SetVisibility(true);				
+				TraceHitItem->GetPickupWidget()->SetVisibility(true);
 			}	
 			//we hit an AItem last frame
 			if (TraceHitItemLastFrame)
 			{
-				if (HitItem != TraceHitItemLastFrame)//we are hitting a different item this frame, or AItem is null
+				if (TraceHitItem != TraceHitItemLastFrame)//we are hitting a different item this frame, or AItem is null
 				{
 					TraceHitItemLastFrame->GetPickupWidget()->SetVisibility(false);
 				}
 			}
 			//Store a reference to hit item for next frame
-			TraceHitItemLastFrame = HitItem;
+			TraceHitItemLastFrame = TraceHitItem;
 			//	cast fails:		TraceHitItemLastFrame = nullptr 
 			//  cast suceeds:	TraceHitItemLastFrame = AItem
 			
@@ -419,13 +427,18 @@ void AShooterCharacter::TraceForItems()
 	}
 }
 
-void AShooterCharacter::SpawnDefaultWeapon()
+AWeapon* AShooterCharacter::SpawnDefaultWeapon()
 {
 	//Check the TSubclass variable
 	if (DefaultWeaponClass)
 	{
 		//Spawn the Weapon
+		return GetWorld()->SpawnActor<AWeapon>(DefaultWeaponClass);
+
+		/*// Refactored
+		//Spawn the Weapon
 		AWeapon* DefaultWeapon = GetWorld()->SpawnActor<AWeapon>(DefaultWeaponClass);
+
 		//Get the Hand Socket
 		const USkeletalMeshSocket* HandSocket = GetMesh()->GetSocketByName(FName("RightHandSocket"));
 		if (HandSocket)
@@ -434,19 +447,16 @@ void AShooterCharacter::SpawnDefaultWeapon()
 			HandSocket->AttachActor(DefaultWeapon, GetMesh());
 		}
 		//Set equipped weapon to the newly spawned weapon
-		EquippedWeapon = DefaultWeapon;
+		EquippedWeapon = DefaultWeapon;*/
 	}
 
+	return nullptr;
 }
 
 void AShooterCharacter::EquipWeapon(AWeapon* WeaponToEquip)
 {
 	if (WeaponToEquip)
 	{	
-
-
-
-
 		//Get the Hand Socket
 		const USkeletalMeshSocket* HandSocket = GetMesh()->GetSocketByName(FName("RightHandSocket"));
 		if (HandSocket)
@@ -456,7 +466,44 @@ void AShooterCharacter::EquipWeapon(AWeapon* WeaponToEquip)
 		}
 		//Set equipped weapon to the newly spawned weapon
 		EquippedWeapon = WeaponToEquip;
+		EquippedWeapon->SetItemState(EItemState::EIS_Equipped);
 	}
+}
+
+void AShooterCharacter::DropWeapon()
+{
+	if (EquippedWeapon)
+	{
+		FDetachmentTransformRules DetachmentTransformRules(EDetachmentRule::KeepWorld,true);//note that the obj will be modified
+		EquippedWeapon->GetItemMesh()->DetachFromComponent(DetachmentTransformRules);
+		
+		EquippedWeapon->SetItemState(EItemState::EIS_Falling);
+		EquippedWeapon->ThrowWeapon();
+	}
+}
+
+void AShooterCharacter::SelectButtonPressed()
+{
+	if (TraceHitItem)
+	{
+		auto TraceHitWeapon = Cast<AWeapon>(TraceHitItem);
+		SwapWeapon(TraceHitWeapon);
+	}
+	
+}
+
+void AShooterCharacter::SelectButtonReleased()
+{
+
+}
+
+void AShooterCharacter::SwapWeapon(AWeapon* WeaponToSwap)
+{
+
+	DropWeapon();
+	EquipWeapon(WeaponToSwap);
+	TraceHitItem = nullptr;
+	TraceHitItemLastFrame = nullptr;//can no longer turn off label for item - so we must hide at equip
 }
 
 // Called every frame
@@ -487,27 +534,33 @@ void AShooterCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCo
 
 	check(PlayerInputComponent);//halts execution if not valid
 	
-	//WASD
+	//WASD Move
 	PlayerInputComponent->BindAxis("MoveForward", this, &AShooterCharacter::MoveForward);
 	PlayerInputComponent->BindAxis("MoveRight", this, &AShooterCharacter::MoveRight);
 	
-	//Arrows
+	//Arrows turn/look up
 	PlayerInputComponent->BindAxis("TurnRate", this, &AShooterCharacter::TurnAtRate);
 	PlayerInputComponent->BindAxis("LookUpRate", this, &AShooterCharacter::LookUpAtRate);
 	
-	//Mouse
+	//Mouse turn/look up
 	PlayerInputComponent->BindAxis("Turn", this, &AShooterCharacter::Turn); //&APawn::AddControllerYawInput);
 	PlayerInputComponent->BindAxis("LookUp", this, &AShooterCharacter::LookUp); //&APawn::AddControllerPitchInput);
 
+	//Jump
 	PlayerInputComponent->BindAction("Jump", IE_Pressed, this, &ACharacter::Jump);
 	PlayerInputComponent->BindAction("Jump", IE_Released, this, &ACharacter::StopJumping);
 
+	//Fire
 	PlayerInputComponent->BindAction("FireButton", IE_Pressed, this, &AShooterCharacter::FireButtonPressed);//FireWeapon);
 	PlayerInputComponent->BindAction("FireButton", IE_Released, this, &AShooterCharacter::FireButtonReleased);
 
-
+	//Aim
 	PlayerInputComponent->BindAction("AimingButton", IE_Pressed, this, &AShooterCharacter::AiminigButtonPressed);
 	PlayerInputComponent->BindAction("AimingButton", IE_Released, this, &AShooterCharacter::AimingButtonReleased);
+
+	//Select
+	PlayerInputComponent->BindAction("Select", IE_Pressed, this, &AShooterCharacter::SelectButtonPressed);
+	PlayerInputComponent->BindAction("Select", IE_Released, this, &AShooterCharacter::SelectButtonReleased);
 
 
 }

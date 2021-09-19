@@ -89,17 +89,26 @@ protected:
 	void TraceForItems();
 
 	/** Spawns a default weapon and equips it*/
-	void SpawnDefaultWeapon();
+	class AWeapon* SpawnDefaultWeapon();
 
 	/** Takes a weapon and attaches it to the skeletal mesh */
-	void EquipWeapon(class AWeapon* WeaponToEquip );//forward declare
+	void EquipWeapon(AWeapon* WeaponToEquip );
+
+	/** Detach weapon and let it fall to the ground */
+	void DropWeapon();
+
+	void SelectButtonPressed();
+	void SelectButtonReleased();
+
+	/** Drops currently equipped Weapon and equips TraceHitItem */
+	void SwapWeapon(AWeapon* WeaponToSwap);
 
 public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
 	// Called to bind functionality to input
-	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
+	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;//forward declare
 
 private:
 	/*
@@ -252,10 +261,14 @@ private:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Combat, meta = (AllowPrivateAccess = "true"))
 	AWeapon* EquippedWeapon;
 
-	//To spawn something we need a UClass, a variable that holds a reference to a blueprint
+	//To spawn something we need a UClass, a C++ variable that holds a reference to a blueprint
 	/** Set this in Blueprints for the default Weapon class */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = Combat, meta = (AllowPrivateAccess = "true"))
 	TSubclassOf<AWeapon> DefaultWeaponClass;
+
+	/** The Item currently hit by our trace in TraceForItems (could be null)*/
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Combat, meta = (AllowPrivateAccess = "true"))
+	AItem* TraceHitItem;
 
 public:
 	/** Returns CameraBoom subobject */
