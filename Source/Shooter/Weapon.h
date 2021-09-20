@@ -20,15 +20,22 @@ public:
 
 protected://protected functions
 
+/* EQUIP */
+
 	void StopFalling();//get into pickup state
 
 private://private variables
+
+/* EQUIP */
 
 	FTimerHandle ThrowWeaponTimer;
 	float ThrowWeaponTime;
 	bool bFalling;
 
 public://getters setters
+
+/* EQUIP */
+
 	/** Adds an impulse to the weapon */
 	void ThrowWeapon();
 };

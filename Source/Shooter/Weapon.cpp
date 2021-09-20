@@ -10,6 +10,7 @@ AWeapon::AWeapon():
 {
 	PrimaryActorTick.bCanEverTick = true;
 }
+
 void AWeapon::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
@@ -22,6 +23,9 @@ void AWeapon::Tick(float DeltaTime)
 	}
 }
 
+
+
+/* EQUIP */
 
 void AWeapon::ThrowWeapon()
 {
@@ -47,7 +51,6 @@ void AWeapon::ThrowWeapon()
 		&AWeapon::StopFalling, 
 		ThrowWeaponTime);
 }
-
 void AWeapon::StopFalling()//purpose is to reset bFalling flag after a delay
 {
 	bFalling = false;
