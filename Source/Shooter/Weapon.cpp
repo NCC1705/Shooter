@@ -5,8 +5,11 @@
 
 AWeapon::AWeapon():
 	ThrowWeaponTime(.7f),
-	bFalling(false)
-
+	bFalling(false),
+	Ammo(100),
+	WeaponType(EWeaponType::EWT_SubmachineGun),
+	AmmoType(EAmmoType::EAT_9mm),
+	ReloadMontageSection(FName(TEXT("Reload SMG")))
 {
 	PrimaryActorTick.bCanEverTick = true;
 }
@@ -55,4 +58,21 @@ void AWeapon::StopFalling()//purpose is to reset bFalling flag after a delay
 {
 	bFalling = false;
 	SetItemState(EItemState::EIS_Pickup);
+}
+
+
+
+/* AMMO */
+
+void AWeapon::DecrementAmmo()
+{
+	if (Ammo - 1 <= 0)
+	{
+		Ammo = 0;
+	}
+	else
+	{
+		--Ammo;
+	}
+
 }

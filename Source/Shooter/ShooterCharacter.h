@@ -4,18 +4,20 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
-#include "ShooterCharacter.generated.h"
+#include "AmmoType.h"
+#include "ShooterCharacter.generated.h"//generated.h must always be last
+
+
 
 UENUM(BlueprintType)
-enum class EAmmoType : uint8
+enum class ECombatState :uint8
 {
-	EAT_9mm UMETA(DisplayName="9mm"),
-	EAT_AR UMETA(DisplayName = "AssaultRifle"),
+	ECS_Unoccupied UMETA(DisplayName = "Unoccupied"),
+	ECS_FireTimerInProgress UMETA(DisplayName = "FireTimerInProgress"),
+	ECS_Reloading UMETA(DisplayName = "Reloading"),
 
-	EAT_MAX UMETA(DisplayName = "DefaultMAX")
-
+	ECS_MAX UMETA(DisplayName = "DefaultMAX")
 };
-
 
 
 UCLASS()
@@ -68,7 +70,7 @@ protected:
 
 
 
-/*  AIM */
+/*  AIM & FIRE */
 
 	/** Called when the fire button is pressed */
 	void FireWeapon();
@@ -91,9 +93,17 @@ protected:
 	UFUNCTION()
 	void AutoFireReset();//timer callback - must be UFUNCTION
 	/** Line trace for items under the crosshairs */
-	bool TraceUnderCrosshairs(FHitResult& OutHitResult, FVector& OutHitLocation);
+	bool TraceUnderCrosshairs(FHitResult& OutHitResult, FVector& OutHitLocation);	
+	/** Fire Weapon functions */
+	void PlayFireSound();
+	void SendBullet();
+	void PlayGunfireMontage();
+	/** Bound to the R key and Gamepad Face Button Left */
+	void ReloadButtonPressed();
+	/** Handle reloading of the Weapon */
+	void ReloadWeapon();
 
-
+	
 
 /* EQUIP*/
 
@@ -116,6 +126,11 @@ protected:
 
 	/** Initialize the Ammo Map with ammo values */
 	void InitializeAmmoMap();
+	/** Check to make sure our Weapon has Ammo */
+	bool WeaponHasAmmo();
+	/** Check to see if we have Ammo of the EquippedWeapon's ammo type */
+	bool CarryingAmmo();
+
 
 public:
 	// Called every frame
@@ -186,17 +201,14 @@ private:
 
 
 
-/*EFFECTS*/
+/* EFFECTS */
 
 	/** Randomized gunshot sound cue */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Combat, meta = (AllowPrivateAccess = "true"))
 	class USoundCue* FireSound;
 	/** Flash spawned at barrel socket */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Combat, meta = (AllowPrivateAccess = "true"))
-	class UParticleSystem* MuzzleFlash;
-	/** Montage for firing the weapon */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Combat, meta = (AllowPrivateAccess = "true"))
-	class UAnimMontage* HipFireMontage;
+	class UParticleSystem* MuzzleFlash;	
 	/** Particles spawned upon bullet impact */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Combat, meta = (AllowPrivateAccess = "true"))
 	UParticleSystem* ImpactParticles;//already forward declared 2 vars up
@@ -204,9 +216,20 @@ private:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Combat, meta = (AllowPrivateAccess = "true"))
 	UParticleSystem* BeamParticles;
 
+	
+	
+/* ANIMATION */
 
+	/** Montage for firing the weapon */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Combat, meta = (AllowPrivateAccess = "true"))
+	class UAnimMontage* HipFireMontage;
+	/** Montage for reloading the weapon */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Combat, meta = (AllowPrivateAccess = "true"))
+	UAnimMontage* ReloadMontage;
+	UFUNCTION(BlueprintCallable)
+	void FinishReloading();
 
-/*  AIM */
+/* AIM & FIRE */
 
 	/** True when aiming */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Combat, meta = (AllowPrivateAccess = "true"))
@@ -288,6 +311,20 @@ private:
 	/** Starting amount of AR ammo*/
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Items, meta = (AllowPrivateAccess = "true"))
 	int32 StartingARAmmo;
+
+
+
+/* COMBAT */
+
+	/** Combat State, can only fire or reload if Unoccupied */
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Combat, meta = (AllowPrivateAccess = "true"))//Set from C++
+	ECombatState CombatState;
+
+
+
+/* DEBUG */
+	FDateTime LastFireTime;
+	
 
 public:
 
