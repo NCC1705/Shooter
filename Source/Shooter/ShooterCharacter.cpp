@@ -100,6 +100,9 @@ AShooterCharacter::AShooterCharacter() ://initialize values with an initialize l
 	GetCharacterMovement()->JumpZVelocity = 600.f;
 	GetCharacterMovement()->AirControl = 0.2f;
 	
+	// Create Hand Scene Component
+	HandSceneComponent = CreateDefaultSubobject<USceneComponent>(TEXT("HandSceneComp"));
+
 }
 
 // Called when the game starts or when spawned
@@ -169,6 +172,7 @@ void AShooterCharacter::Tick(float DeltaTime)
 
 	// Check OverlappedItemCount, then trace for items
 	TraceForItems();
+	
 }
 
 // Called to bind functionality to input
@@ -390,8 +394,19 @@ void AShooterCharacter::FinishCrosshairBulletFire()
 	bFiringBullet = false;
 }
 void AShooterCharacter::FireButtonPressed()
-{
+{	
+	
+	/*int myInt{(uint8)CombatState};
+	UE_LOG(LogTemp, Warning, TEXT("int myInt: %d"), myInt);
+	checked the state, was ok; forgot to set the ReloadAnimationMontage in ShooterCharacterBP,
+	was getting stuck at Reload
+	*/
+
+	//UE_LOG(LogTemp, Warning, TEXT("bool MyBool: %d"), bFireButtonPressed);
+	//UE_LOG(LogTemp, Warning, TEXT("Fire Button Pressed"));
+
 	bFireButtonPressed = true;//this should ignore if we have ammo
+
 	FireWeapon();	
 }
 void AShooterCharacter::FireButtonReleased()
@@ -434,6 +449,25 @@ float AShooterCharacter::GetCrosshairSpreadMultiplier() const
 {
 	return CrosshairSpreadMultiplier;
 }
+void AShooterCharacter::FireWeapon()
+{
+	//UE_LOG(LogTemp, Warning, TEXT("Fire Weapon."));
+	if (EquippedWeapon == nullptr) return;
+	if (CombatState != ECombatState::ECS_Unoccupied) return;
+
+	if (WeaponHasAmmo())
+	{
+		PlayFireSound();
+		SendBullet();
+		PlayGunfireMontage();
+		//Sunstract 1 from the Weapon's Ammo
+		EquippedWeapon->DecrementAmmo();
+
+		StartFireTimer();
+
+		//StartCrosshairBulletFire();//start bullet fire timer for crosshairs
+	}
+}
 void AShooterCharacter::SetLookRates()
 {
 	if (bAiming)
@@ -449,32 +483,6 @@ void AShooterCharacter::SetLookRates()
 
 	//BaseTurnRate = bAiming? AimingTurnRate: HipTurnRate;
 	//BaseLookUpRate = bAiming? AimingLookUpRate: HipLookUpRate;
-}
-void AShooterCharacter::FireWeapon()
-{
-	//UE_LOG(LogTemp, Warning, TEXT("Fire Weapon."));
-	if (EquippedWeapon == nullptr) return;
-	if (CombatState != ECombatState::ECS_Unoccupied) return;
-	
-	if (WeaponHasAmmo())
-	{		
-
-		PlayFireSound();
-		SendBullet();
-		PlayGunfireMontage();
-		//Sunstract 1 from the Weapon's Ammo
-		EquippedWeapon->DecrementAmmo();
-
-		StartFireTimer();
-
-		//StartCrosshairBulletFire();//start bullet fire timer for crosshairs
-	}
-	
-		
-	
-	
-	
-
 }
 bool AShooterCharacter::GetBeamEndLocation(
 	const FVector& MuzzleSocketLocation,
@@ -727,6 +735,7 @@ void AShooterCharacter::ReloadWeapon()
 {
 	if (CombatState != ECombatState::ECS_Unoccupied) return;
 	if (EquippedWeapon == nullptr) return;
+
 	// Do we have ammo of the correct type?	
 	if (CarryingAmmo())
 	{	
@@ -738,14 +747,79 @@ void AShooterCharacter::ReloadWeapon()
 			AnimInstance->Montage_JumpToSection(
 				EquippedWeapon->GetReloadMontageSection());			 
 		}	
-
 	}
 }
 void AShooterCharacter::FinishReloading()
 {
-	//TODO: Update Ammo Map
+	//Update combat state
 	CombatState = ECombatState::ECS_Unoccupied;
+
+	if (EquippedWeapon == nullptr) return;
+
+	const auto AmmoType{ EquippedWeapon->GetAmmoType() };
+
+	//Update AmmoMap
+	if (AmmoMap.Contains(AmmoType))
+	{
+		// Ammount of ammo the Character is carrying of the EquippedWeapon type
+		int32 CarriedAmmo = AmmoMap[AmmoType];
+
+		//Space left in the magazine of EquippedWeapon
+		const int32 MagEmptySpace = 
+			EquippedWeapon->GetMagazineCapacity() - 
+			EquippedWeapon->GetAmmo();
+
+		if (MagEmptySpace > CarriedAmmo)//30 capacity only have 5 bullets
+		{
+			//Reload the magazine with all the ammo we are carrying
+			EquippedWeapon->ReloadAmmo(CarriedAmmo);
+			CarriedAmmo = 0;
+			AmmoMap.Add(AmmoType, CarriedAmmo);//map doesnt have duplicate keys
+		}
+		else
+		{
+			// fill the magazine
+			EquippedWeapon->ReloadAmmo(MagEmptySpace);
+			CarriedAmmo -= MagEmptySpace;
+			AmmoMap.Add(AmmoType, CarriedAmmo);
+		}
+	}
+
+	ContinueFiringAfterReload();
 }
+void AShooterCharacter::ContinueFiringAfterReload()
+{
+	if (WeaponHasAmmo())//My addition - continue firing after reload if button still pressed
+	{
+		if (bFireButtonPressed)
+		{
+			FireWeapon();
+		}
+	}
+}
+void AShooterCharacter::GrabClip()
+{
+	if (EquippedWeapon == nullptr) return;
+	if (HandSceneComponent == nullptr) return;
+
+	// Index for the clip bone of the equipped weapon
+	int32 ClipBoneIndex{ EquippedWeapon->GetItemMesh()->GetBoneIndex(EquippedWeapon->GetClipBoneName()) };
+	// Store the transform of the clip
+	ClipTransform = EquippedWeapon->GetItemMesh()->GetBoneTransform(ClipBoneIndex);
+
+	//KeepRelative - we are attaching the SceneComponent to the Mesh on the hand bone 
+	//but we want to keep the relative location because we want that offset from the hand to the clip
+	FAttachmentTransformRules AttachmentRules(EAttachmentRule::KeepRelative, true);
+	HandSceneComponent->AttachToComponent(GetMesh(), AttachmentRules, FName(TEXT("Hand_L")));
+	HandSceneComponent->SetWorldTransform(ClipTransform);
+	
+	EquippedWeapon->SetMovingClip(true);
+}
+void AShooterCharacter::ReleaseClip()
+{
+	EquippedWeapon->SetMovingClip(false);
+}
+
 
 
 /* EQUIP */
@@ -886,8 +960,14 @@ void AShooterCharacter::SelectButtonPressed()
 	{
 		//auto TraceHitWeapon = Cast<AWeapon>(TraceHitItem);
 		//SwapWeapon(TraceHitWeapon);
-
-		TraceHitItem->StartItemCurve(this);//shooter character pointer
+		if (TraceHitItem)
+		{
+			TraceHitItem->StartItemCurve(this);//shooter character pointer
+			if (TraceHitItem->GetPickupSound())
+			{
+				UGameplayStatics::PlaySound2D(this, TraceHitItem->GetPickupSound());
+			}
+		}
 	}
 	
 }
@@ -935,6 +1015,10 @@ void AShooterCharacter::GetPickupItem(AItem* Item)
 	if (Weapon)
 	{
 		SwapWeapon(Weapon);
+	}
+	if (Item->GetEquipSound())
+	{
+		UGameplayStatics::PlaySound2D(this, Item->GetEquipSound());
 	}
 }
 

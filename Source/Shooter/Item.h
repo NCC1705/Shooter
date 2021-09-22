@@ -151,6 +151,18 @@ private:
 	UCurveFloat* ItemScaleCurve;
 
 
+
+
+/* EFFECTS */
+
+	/** Sound played when item is picked up */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Item Properties", meta = (AllowPrivateAccess = "true"))
+	class USoundCue* PickupSound;
+	/** Sound played when item is equipped */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Item Properties", meta = (AllowPrivateAccess = "true"))
+	class USoundCue* EquipSound;
+
+
 public://GetSet
 	FORCEINLINE UWidgetComponent* GetPickupWidget() const { return PickupWidget; }
 	FORCEINLINE USphereComponent* GetAreaSphere() const { return AreaSphere; }
@@ -161,4 +173,7 @@ public://GetSet
 
 	/** Called from AShooterCharacter class */
 	void StartItemCurve(AShooterCharacter* Char);
+
+	FORCEINLINE USoundCue* GetPickupSound() const { return PickupSound; }
+	FORCEINLINE USoundCue* GetEquipSound() const { return EquipSound; }
 };

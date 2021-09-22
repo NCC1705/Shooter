@@ -102,6 +102,14 @@ protected:
 	void ReloadButtonPressed();
 	/** Handle reloading of the Weapon */
 	void ReloadWeapon();
+	/** Continue firing after reload */
+	void ContinueFiringAfterReload();//My addition
+	/** Called from AnimBP with GrabClip notify */
+	UFUNCTION(BlueprintCallable)
+	void GrabClip();	
+	/** Called from AnimBP with ReplaceClip notify */
+	UFUNCTION(BlueprintCallable)
+	void ReleaseClip();
 
 	
 
@@ -228,6 +236,14 @@ private:
 	UAnimMontage* ReloadMontage;
 	UFUNCTION(BlueprintCallable)
 	void FinishReloading();
+	/** Transform of the clip when we first grab the clip during reloading */
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Combat, meta = (AllowPrivateAccess = "true"))
+	FTransform ClipTransform;
+	/** Scene component to attach to the character hand during reloading */
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Combat, meta = (AllowPrivateAccess = "true"))
+	USceneComponent* HandSceneComponent;
+
+
 
 /* AIM & FIRE */
 
@@ -310,8 +326,7 @@ private:
 	int32 Starting9mmAmmo;
 	/** Starting amount of AR ammo*/
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Items, meta = (AllowPrivateAccess = "true"))
-	int32 StartingARAmmo;
-
+	int32 StartingARAmmo;	
 
 
 /* COMBAT */
