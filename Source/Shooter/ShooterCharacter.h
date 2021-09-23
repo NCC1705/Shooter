@@ -372,4 +372,6 @@ public:
 	/** A vector in front/up of the camera For Item Interp movement when picked up */
 	FVector GetCameraInterpLocation();
 	void GetPickupItem(AItem* Item);
+	/** Used to prevent Aim Offset while reloading */
+	FORCEINLINE ECombatState GetCombatState() const { return CombatState; }
 };

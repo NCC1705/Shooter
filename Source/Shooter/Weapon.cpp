@@ -85,3 +85,7 @@ void AWeapon::ReloadAmmo(int32 Amount)
 		TEXT("Attempted to reload with more than magazine capacity!"))//pause execution if false
 	Ammo += Amount;
 }
+bool AWeapon::ClipIsFull()
+{
+	return Ammo >= MagazineCapacity;
+}

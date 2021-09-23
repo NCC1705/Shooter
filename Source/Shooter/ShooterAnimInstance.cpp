@@ -16,7 +16,10 @@ UShooterAnimInstance::UShooterAnimInstance():
 	bAiming(false),					//AIM & FIRE
 	CharacterYaw(0.f),				//TURN IN PLACE
 	CharacterYawLastFrame(0.f),
-	RootYawOffset(0.f)
+	RootYawOffset(0.f),
+	Pitch(0.f),
+	bReloading(false),
+	OffsetState(EOffsetState::EOS_Hip)
 {
 
 }
@@ -58,7 +61,24 @@ void UShooterAnimInstance::UpdateAnimationProperties(float DeltaTime)
 		}
 		
 		bAiming = ShooterCharacter->GetAiming();
+		bReloading = ShooterCharacter->GetCombatState() == ECombatState::ECS_Reloading;
 
+		if (bReloading)
+		{
+			OffsetState = EOffsetState::EOS_Reloading;
+		}
+		else if (bIsInAir)
+		{
+			OffsetState = EOffsetState::EOS_InAir;
+		}
+		else if (ShooterCharacter->GetAiming())
+		{
+			OffsetState = EOffsetState::EOS_Aiming;
+		}
+		else
+		{
+			OffsetState = EOffsetState::EOS_Hip;
+		}
 		/*FString RotationMessage = FString::Printf(TEXT("Base Aim Rotation: %f"), AimRotation.Yaw);
 		FString MovementRotationMessage = FString::Printf(TEXT("Movement Rotation: %f"), MovementRotation.Yaw);	
 		FString OffsetMessage = FString::Printf(TEXT("Movement Offset Yaw: %f"), MovementOffsetYaw);
@@ -84,7 +104,9 @@ void UShooterAnimInstance::TurnInPlace()
 {
 	if (ShooterCharacter == nullptr) return;
 
-	if (Speed > 0)
+	Pitch = ShooterCharacter->GetBaseAimRotation().Pitch;	
+
+	if (Speed > 0 || bIsInAir)
 	{
 		//Don't turn in place if character is moving
 		RootYawOffset = 0.f;

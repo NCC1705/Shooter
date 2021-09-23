@@ -91,6 +91,7 @@ public://getters setters
 	void ReloadAmmo(int32 Amount);
 	FORCEINLINE FName GetClipBoneName() const { return ClipBoneName; }
 	FORCEINLINE void SetMovingClip(bool Move) { bMovingClip = Move; }
+	bool ClipIsFull();
 
 /* SPECS */
 	FORCEINLINE EWeaponType GetWeaponType() const { return WeaponType; }
