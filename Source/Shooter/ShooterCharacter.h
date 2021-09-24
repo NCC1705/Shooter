@@ -43,7 +43,8 @@ protected:
 	/** Called for side to side input */
 	void MoveRight(float Value);
 
-
+	void CrouchButtonPressed();
+	
 
 /** TURN LOOK UP */
 
@@ -149,6 +150,8 @@ public:
 
 private:
 
+
+
 /* CAMERA */
 
 	/*Camera boom positioning the camera behind the character
@@ -165,6 +168,12 @@ private:
 		class UCameraComponent* FollowCamera;
 
 
+
+/* MOVE */
+
+	/** True wen crouching */
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Movement, meta = (AllowPrivateAccess = "true"))
+	bool bCrouching;
 	
 /** TURN LOOK UP */
 
@@ -342,6 +351,12 @@ private:
 	
 
 public:
+
+/* MOVE */
+
+	FORCEINLINE bool GetCrouching() const { return bCrouching; }
+
+
 
 /* CAMERA */
 

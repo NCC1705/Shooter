@@ -25,6 +25,7 @@ AShooterCharacter::AShooterCharacter() ://initialize values with an initialize l
 	//Base rates for turning/looking up
 	BaseTurnRate(45.f),
 	BaseLookUpRate(45.f),
+	bCrouching(false),
 	//turn rates for aiming/not aiming
 	HipTurnRate(90.f),
 	HipLookUpRate(90.f),
@@ -213,6 +214,9 @@ void AShooterCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCo
 	//Reload
 	PlayerInputComponent->BindAction("ReloadButton", IE_Pressed, this, &AShooterCharacter::ReloadButtonPressed);
 
+	//Crouch
+	PlayerInputComponent->BindAction("Crouch", IE_Pressed, this, &AShooterCharacter::CrouchButtonPressed);
+
 }
 
 
@@ -244,6 +248,14 @@ void AShooterCharacter::MoveRight(float Value)
 		AddMovementInput(Direction, Value);
 	}
 }
+void AShooterCharacter::CrouchButtonPressed()
+{
+	if (!GetCharacterMovement()->IsFalling())
+	{
+		bCrouching = !bCrouching;
+	}
+}
+
 
 
 

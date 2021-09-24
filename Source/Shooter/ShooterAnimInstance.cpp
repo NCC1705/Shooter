@@ -13,9 +13,12 @@ UShooterAnimInstance::UShooterAnimInstance():
 	bIsAccelerating(false),
 	MovementOffsetYaw(0.f),
 	LastMovementOffsetYaw(0.f),	
-	bAiming(false),					//AIM & FIRE
-	CharacterYaw(0.f),				//TURN IN PLACE
-	CharacterYawLastFrame(0.f),
+	bAiming(false),					//AIM & FIRE	
+	CharacterRotation(FRotator(0.f)),
+	CharacterRotationLastFrame(FRotator(0.f)),
+	YawDelta(0.f),
+	CharacterYawTurn(0.f),			//TURN IN PLACE
+	CharacterYawLastFrameTurn(0.f),
 	RootYawOffset(0.f),
 	Pitch(0.f),
 	bReloading(false),
@@ -61,6 +64,7 @@ void UShooterAnimInstance::UpdateAnimationProperties(float DeltaTime)
 		}
 		
 		bAiming = ShooterCharacter->GetAiming();
+		bCrouching = ShooterCharacter->GetCrouching();
 		bReloading = ShooterCharacter->GetCombatState() == ECombatState::ECS_Reloading;
 
 		if (bReloading)
@@ -89,6 +93,7 @@ void UShooterAnimInstance::UpdateAnimationProperties(float DeltaTime)
 		}*/
 	}
 	TurnInPlace();
+	Lean(DeltaTime);
 }
 
 void UShooterAnimInstance::NativeInitializeAnimation()
@@ -110,20 +115,20 @@ void UShooterAnimInstance::TurnInPlace()
 	{
 		//Don't turn in place if character is moving
 		RootYawOffset = 0.f;
-		CharacterYaw = ShooterCharacter->GetActorRotation().Yaw;
-		CharacterYawLastFrame = CharacterYaw;
+		CharacterYawTurn = ShooterCharacter->GetActorRotation().Yaw;
+		CharacterYawLastFrameTurn = CharacterYawTurn;
 		RotationCurveLastFrame = 0.f;
 		RotationCurve = 0.f;
 	}
 	else
 	{
-		CharacterYawLastFrame = CharacterYaw;//store last then update
-		CharacterYaw = ShooterCharacter->GetActorRotation().Yaw;
-		const float YawDelta{ CharacterYaw - CharacterYawLastFrame };
+		CharacterYawLastFrameTurn = CharacterYawTurn;//store last then update
+		CharacterYawTurn = ShooterCharacter->GetActorRotation().Yaw;
+		const float YawDeltaTurn{ CharacterYawTurn - CharacterYawLastFrameTurn };
 		
 		//Root Yaw Offset, updated and clamped to [-180, 180]
 		//RootYawOffset -= YawDelta;
-		RootYawOffset = UKismetMathLibrary::NormalizeAxis(RootYawOffset - YawDelta);
+		RootYawOffset = UKismetMathLibrary::NormalizeAxis(RootYawOffset - YawDeltaTurn);
 
 		//1.0 if turning, 0.0 if not
 		const float Turning{ GetCurveValue(TEXT("Turning")) };
@@ -173,3 +178,49 @@ void UShooterAnimInstance::TurnInPlace()
 
 	}
 }
+
+
+
+/* LEAN */
+
+void UShooterAnimInstance::Lean(float DeltaTime)
+{
+	if (ShooterCharacter == nullptr) return;
+
+	/* Not working jerk at +/-180 degrees
+	CharacterYawLastFrame = CharacterYaw;
+	CharacterYaw = ShooterCharacter->GetActorRotation().Yaw;
+	const float Target{ (CharacterYaw - CharacterYawLastFrame) / DeltaTime };
+	const float Interp{ FMath::FInterpTo(YawDelta, Target, DeltaTime, 6.f) };
+	YawDelta = FMath::Clamp(Interp, -90.f, 90.f);
+	*/
+
+
+
+	CharacterRotationLastFrame = CharacterRotation;
+	CharacterRotation = ShooterCharacter->GetActorRotation();
+
+	const FRotator Delta{ UKismetMathLibrary::NormalizedDeltaRotator(CharacterRotation,CharacterRotationLastFrame) };
+
+	const float Target{ Delta.Yaw / DeltaTime };
+	const float Interp{ FMath::FInterpTo(YawDelta, Target, DeltaTime, 6.f) };
+	YawDelta = FMath::Clamp(Interp, -90.f, 90.f);
+
+	/*
+	if (GEngine) GEngine->AddOnScreenDebugMessage(
+		2, 
+		-1, 
+		FColor::Cyan, 
+		FString::Printf(TEXT("YawDelta: %f"), YawDelta));
+
+	if (GEngine) GEngine->AddOnScreenDebugMessage(
+		3,
+		-1,
+		FColor::Cyan,
+		FString::Printf(TEXT("YawDelta: %f"), Delta.Yaw));
+		*/
+
+
+}
+
+

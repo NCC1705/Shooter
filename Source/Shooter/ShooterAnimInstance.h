@@ -37,6 +37,8 @@ protected:
 
 	/** Handle turning in place variables */
 	void TurnInPlace();
+	/** Handle calculations for leaning while running */
+	void Lean(float DeltaTime);
 
 private:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Movement, meta = (AllowPrivateAccess = "true"))
@@ -45,8 +47,8 @@ private:
 /* MOVE */
 
 	/** Character speed */
-	UPROPERTY(VisibleAnywhere,BlueprintReadOnly,Category=Movement, meta = (AllowPrivateAccess = "true"))
-	float Speed;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Movement, meta = (AllowPrivateAccess = "true"))
+		float Speed;
 	/** Character is in the air*/
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Movement, meta = (AllowPrivateAccess = "true"))
 	bool bIsInAir;
@@ -59,8 +61,21 @@ private:
 	/** Offset yaw the frame before we stopped moving */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Movement, meta = (AllowPrivateAccess = "true"))
 	float LastMovementOffsetYaw;
+	/** Yaw of the character this frame for leaning */
+	//float CharacterYaw; not working, jerk at +/-180 degrees
+	FRotator CharacterRotation;
 
+	/** Yaw of the character the previous frame for leaning */
+	//float CharacterYawLastFrame; not working, jerk at + / -180 degrees
+	FRotator CharacterRotationLastFrame;
 
+	/** Yaw delta used for leaning in the running blend space*/
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = Lean, meta = (AllowPrivateAccess = "true"))
+	float YawDelta;
+
+	/** True when crouching */
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = Crouching, meta = (AllowPrivateAccess = "true"))
+	bool bCrouching;
 
 /* AIM & FIRE */
 
@@ -72,10 +87,10 @@ private:
 
 /* TURN IN PLACE */
 
-	/** Yaw of the character this frame */
-	float CharacterYaw;
-	/** Yaw of the character the previous frame */
-	float CharacterYawLastFrame;
+	/** Yaw of the character this frame for turn in place - only updated when standing still / not in air */
+	float CharacterYawTurn;
+	/** Yaw of the character the previous frame for turn in place - only updated when standing still / not in air */
+	float CharacterYawLastFrameTurn;
 	/** Keeps track of the offset used to rotate the root bone back */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Turn In Place", meta = (AllowPrivateAccess = "true"))
 	float RootYawOffset;
