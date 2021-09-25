@@ -14,6 +14,7 @@ UShooterAnimInstance::UShooterAnimInstance():
 	MovementOffsetYaw(0.f),
 	LastMovementOffsetYaw(0.f),	
 	bAiming(false),					//AIM & FIRE	
+	RecoilWeight(1.0f),
 	CharacterRotation(FRotator(0.f)),
 	CharacterRotationLastFrame(FRotator(0.f)),
 	YawDelta(0.f),
@@ -22,7 +23,8 @@ UShooterAnimInstance::UShooterAnimInstance():
 	RootYawOffset(0.f),
 	Pitch(0.f),
 	bReloading(false),
-	OffsetState(EOffsetState::EOS_Hip)
+	OffsetState(EOffsetState::EOS_Hip),
+	bTurningInPlace(false)
 {
 
 }
@@ -131,9 +133,10 @@ void UShooterAnimInstance::TurnInPlace()
 		RootYawOffset = UKismetMathLibrary::NormalizeAxis(RootYawOffset - YawDeltaTurn);
 
 		//1.0 if turning, 0.0 if not
-		const float Turning{ GetCurveValue(TEXT("Turning")) };
+		const float Turning{ GetCurveValue(TEXT("Turning")) };//1 turning animation 0 not
 		if (Turning > 0)
 		{
+			bTurningInPlace = true;
 			RotationCurveLastFrame = RotationCurve;
 			RotationCurve = GetCurveValue(TEXT("Rotation"));
 			const float DeltaRotation{ RotationCurve - RotationCurveLastFrame };
@@ -160,6 +163,11 @@ void UShooterAnimInstance::TurnInPlace()
 				RootYawOffset > 0 ? RootYawOffset -= YawExcess : RootYawOffset += YawExcess;
 			}
 		}
+		else
+		{
+			bTurningInPlace = false;
+		}
+
 
 		//Print string examples
 		/*if (GEngine) GEngine->AddOnScreenDebugMessage(
@@ -176,6 +184,45 @@ void UShooterAnimInstance::TurnInPlace()
 			FString::Printf(TEXT("RootYawOffset: %f"),
 				RootYawOffset));//first input parameter is a key for multiple messages*/
 
+	}
+
+	// Set Recoil Weight
+	if (bTurningInPlace)
+	{
+		if (bReloading)
+		{
+			RecoilWeight = 1.f;
+		}
+		else
+		{
+			RecoilWeight = 0.f;
+		}
+	}
+	else//not turning in place
+	{
+		if (bCrouching)//idle crouching, not turning
+		{
+			if (bReloading)
+			{
+				RecoilWeight = 1.f;
+			}
+			else
+			{
+				RecoilWeight = 0.1f;
+			}
+
+		}
+		else
+		{
+			if (bAiming || bReloading)
+			{
+				RecoilWeight = 1.f;
+			}
+			else
+			{
+				RecoilWeight = 0.5f;
+			}
+		}
 	}
 }
 

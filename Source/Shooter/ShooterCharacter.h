@@ -42,9 +42,10 @@ protected:
 	void MoveForward(float Value);
 	/** Called for side to side input */
 	void MoveRight(float Value);
-
 	void CrouchButtonPressed();
-	
+	virtual void Jump() override;
+	/** Interps capsule half height when crouching/standing */
+	void InterpCapsuleHalfHeight(float DeltaTime);
 
 /** TURN LOOK UP */
 
@@ -173,8 +174,29 @@ private:
 
 	/** True wen crouching */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Movement, meta = (AllowPrivateAccess = "true"))
-	bool bCrouching;
-	
+	bool bCrouching;	
+	/** Regular movement speed */
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Movement, meta = (AllowPrivateAccess = "true"))
+	float BaseMovementSpeed;
+	/** Crouch movement speed */
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Movement, meta = (AllowPrivateAccess = "true"))
+	float CrouchMovementSpeed;
+
+	/** Current half height of the capsule */
+	float CurrentCapsuleHalfHeight;
+	/** Half height of the capsule when not crouching */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Movement, meta = (AllowPrivateAccess = "true"))
+	float StandingCapsuleHalfHeight;
+	/** Half height of the capsule when crouching */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Movement, meta = (AllowPrivateAccess = "true"))
+	float CrouchingCapsuleHalfHeight;
+	/** Ground friction while not crouching */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Movement, meta = (AllowPrivateAccess = "true"))
+	float BaseGroundFriction;
+	/**  Ground friction while crouching */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Movement, meta = (AllowPrivateAccess = "true"))
+	float CrouchingGroundFriction;
+
 /** TURN LOOK UP */
 
 	/** Base turn rate in degrees per second. Other scaling may affect final turn rate */
