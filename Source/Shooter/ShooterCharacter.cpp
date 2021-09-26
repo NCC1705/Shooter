@@ -17,6 +17,7 @@
 #include "Components/SphereComponent.h"//for weapon equip disable collision
 #include "Components/BoxComponent.h"//for weapon equip disable collision
 #include "Components/CapsuleComponent.h"
+#include "Ammo.h"
 //DEBUG
 #include "Misc/DateTime.h"
 #include "Misc/Timespan.h"
@@ -29,8 +30,8 @@ AShooterCharacter::AShooterCharacter() ://initialize values with an initialize l
 	bCrouching(false),
 	BaseMovementSpeed(650.f),
 	CrouchMovementSpeed(200.f),
-	StandingCapsuleHalfHeight(88.f),
-	CrouchingCapsuleHalfHeight(44.f),
+	StandingCapsuleHalfHeight(88.f),//88
+	CrouchingCapsuleHalfHeight(44.f),//44
 	BaseGroundFriction(2.f),
 	CrouchingGroundFriction(100.f),
 	//turn rates for aiming/not aiming
@@ -41,13 +42,14 @@ AShooterCharacter::AShooterCharacter() ://initialize values with an initialize l
 	//Mouse look sensitivity scale factors
 	MouseHipTurnRate(1.0f),
 	MouseHipLookUpRate(1.0),
-	MouseAimingTurnRate(0.2f),
-	MouseAimingLookUpRate(0.2f),
+	MouseAimingTurnRate(0.6f),
+	MouseAimingLookUpRate(0.6f),
 	//true when aiming the weapon
 	bAiming(false),
+	bAimingButtonPressed(false),
 	//Camera FOV values
 	CameraDefaultFOV(0.f),//set in BeginPlay
-	CameraZoomedFOV(35.f),
+	CameraZoomedFOV(25.f),//35
 	CameraCurrentFOV(0.f),
 	ZoomInterpSpeed(10.f),
 	//Crosshair spread factors
@@ -82,9 +84,9 @@ AShooterCharacter::AShooterCharacter() ://initialize values with an initialize l
 	// Create a camera boom (pulls in towards the character if there is a collision)
 	CameraBoom = CreateDefaultSubobject<USpringArmComponent>(TEXT("CameraBoom"));
 	CameraBoom->SetupAttachment(RootComponent);
-	CameraBoom->TargetArmLength = 180.0f;//character follow distance
+	CameraBoom->TargetArmLength = 240.0f;//180 character follow distance
 	CameraBoom->bUsePawnControlRotation = true;//rotate the arm based on the controller
-	CameraBoom->SocketOffset = FVector(0.f, 50.f, 45.f);//70
+	CameraBoom->SocketOffset = FVector(0.f, 35.f, 80.f);//50,70
 
 	//pleasant when moving, detrimental when aiming
 	//CameraBoom->bEnableCameraLag = true;
@@ -592,15 +594,34 @@ bool AShooterCharacter::GetBeamEndLocation(
 }
 void AShooterCharacter::AiminigButtonPressed()
 {
-	bAiming = true;
+	bAimingButtonPressed = true;
+	if (CombatState != ECombatState::ECS_Reloading)
+	{
+		Aim();
+	}
+	
 	//removed - called in tick anyway; also, bad practice - should not be here
 	//GetFollowCamera()->SetFieldOfView(CameraZoomedFOV);
 }
 void AShooterCharacter::AimingButtonReleased()
 {
-	bAiming = false;
+	bAimingButtonPressed = false;
+	StopAiming();
 	//removed - called in tick anyway; also, bad practice - should not be here
 	//GetFollowCamera()->SetFieldOfView(CameraDefaultFOV);
+}
+void AShooterCharacter::Aim()
+{
+	bAiming = true;
+	GetCharacterMovement()->MaxWalkSpeed = CrouchMovementSpeed;
+}
+void AShooterCharacter::StopAiming()
+{
+	bAiming = false;
+	if (!bCrouching)
+	{
+		GetCharacterMovement()->MaxWalkSpeed = BaseMovementSpeed;
+	}
 }
 void AShooterCharacter::CameraInterpZoom(float DeltaTime)
 {
@@ -804,11 +825,17 @@ void AShooterCharacter::ReloadButtonPressed()
 void AShooterCharacter::ReloadWeapon()
 {
 	if (CombatState != ECombatState::ECS_Unoccupied) return;
+	
 	if (EquippedWeapon == nullptr) return;
 
 	// Do we have ammo of the correct type?	
 	if (CarryingAmmo() && !EquippedWeapon->ClipIsFull())
 	{
+		if (bAiming)
+		{
+			StopAiming();
+		}
+
 		CombatState = ECombatState::ECS_Reloading;
 		UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
 		if (AnimInstance && ReloadMontage)
@@ -823,6 +850,10 @@ void AShooterCharacter::FinishReloading()
 {
 	//Update combat state
 	CombatState = ECombatState::ECS_Unoccupied;
+	if (bAimingButtonPressed)
+	{
+		Aim();
+	}
 
 	if (EquippedWeapon == nullptr) return;
 
@@ -889,6 +920,8 @@ void AShooterCharacter::ReleaseClip()
 {
 	EquippedWeapon->SetMovingClip(false);
 }
+
+
 
 
 
@@ -1053,6 +1086,28 @@ void AShooterCharacter::SwapWeapon(AWeapon* WeaponToSwap)
 	TraceHitItem = nullptr;
 	TraceHitItemLastFrame = nullptr;//can no longer turn off label for item - so we must hide at equip
 }
+void AShooterCharacter::PickupAmmo(AAmmo* Ammo)
+{
+	// Check to see if AmmoMap contrains Ammo's AmmoType
+	if (AmmoMap.Find(Ammo->GetAmmoType()))
+	{
+		// Get ammount of ammo in our AmmoMap for Ammo's type
+		int32 AmmoCount{ AmmoMap[Ammo->GetAmmoType()] };
+		AmmoCount += Ammo->GetItemCount();
+		// Set the amount of ammo in the Map for this type
+		AmmoMap[Ammo->GetAmmoType()] = AmmoCount;
+	}
+
+	if (EquippedWeapon->GetAmmoType() == Ammo->GetAmmoType())
+	{
+		// Check to see if the gun is empty
+		if (EquippedWeapon->GetAmmo() == 0)
+		{
+			ReloadWeapon();
+		}
+	}
+	Ammo->Destroy();
+}
 void AShooterCharacter::IncrementOverlappedItemCount(int8 Amount)
 {
 	//safety against negative numbers, strange; do they not update properly, is this unreliable?
@@ -1085,10 +1140,17 @@ void AShooterCharacter::GetPickupItem(AItem* Item)
 	if (Weapon)
 	{
 		SwapWeapon(Weapon);
-	}
+	}	
+
 	if (Item->GetEquipSound())
 	{
 		UGameplayStatics::PlaySound2D(this, Item->GetEquipSound());
+	}
+
+	auto Ammo = Cast<AAmmo>(Item);
+	if (Ammo)
+	{
+		PickupAmmo(Ammo);
 	}
 }
 

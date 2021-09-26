@@ -67,7 +67,7 @@ protected:
 	/** Sets the ActiveStars array of bools based on rarity */
 	void SetActiveStars();
 	/** Sets properties of the item components based on State */
-	void SetItemProperties(EItemState State);
+	virtual void SetItemProperties(EItemState State);
 	/** Called when ItemInterpTimer is finished */
 	void FinishInterping();
 	/** Handles Item interpolation when we're in the EquipInterping state */
@@ -164,16 +164,23 @@ private:
 
 
 public://GetSet
+
+//COMPONENTS
 	FORCEINLINE UWidgetComponent* GetPickupWidget() const { return PickupWidget; }
 	FORCEINLINE USphereComponent* GetAreaSphere() const { return AreaSphere; }
-	FORCEINLINE UBoxComponent* GetCollisionBox() const { return CollisionBox; }
+	FORCEINLINE UBoxComponent* GetCollisionBox() const { return CollisionBox; }	
+	FORCEINLINE USkeletalMeshComponent* GetItemMesh() const { return ItemMesh; }
+	
+//STATUS
 	FORCEINLINE EItemState GetItemState() const { return ItemState; }
 	void SetItemState(EItemState State);
-	FORCEINLINE USkeletalMeshComponent* GetItemMesh() const { return ItemMesh; }
+	FORCEINLINE int32 GetItemCount() const { return ItemCount; }
 
-	/** Called from AShooterCharacter class */
-	void StartItemCurve(AShooterCharacter* Char);
-
+//AUDIO
 	FORCEINLINE USoundCue* GetPickupSound() const { return PickupSound; }
 	FORCEINLINE USoundCue* GetEquipSound() const { return EquipSound; }
+
+//CURVES
+	/** Called from AShooterCharacter class */
+	void StartItemCurve(AShooterCharacter* Char);
 };

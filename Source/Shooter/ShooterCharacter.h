@@ -112,7 +112,8 @@ protected:
 	/** Called from AnimBP with ReplaceClip notify */
 	UFUNCTION(BlueprintCallable)
 	void ReleaseClip();
-
+	void Aim();
+	void StopAiming();
 	
 
 /* EQUIP*/
@@ -129,7 +130,8 @@ protected:
 	void SelectButtonReleased();
 	/** Drops currently equipped Weapon and equips TraceHitItem */
 	void SwapWeapon(AWeapon* WeaponToSwap);
-
+	/** Picks up ammo */
+	void PickupAmmo(class AAmmo* Ammo);
 
 
 /* AMMO */
@@ -282,8 +284,10 @@ private:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Combat, meta = (AllowPrivateAccess = "true"))
 	bool bAiming;
 	/** Default camera field of view value */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Combat, meta = (AllowPrivateAccess = "true"))
 	float CameraDefaultFOV;
 	/** Zoomed in camera field of view value */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Combat, meta = (AllowPrivateAccess = "true"))
 	float CameraZoomedFOV;
 	/** Current field of view this frame for interpolation */
 	float CameraCurrentFOV;
@@ -316,7 +320,8 @@ private:
 	float AutomaticFireRate;
 	/** Sets a timer between gunshots */
 	FTimerHandle AutoFireTimer;
-
+	/** Used for knowing when the aiming button is pressed */
+	bool bAimingButtonPressed;
 	
 
 /* TRACE FOR ITEMS */
