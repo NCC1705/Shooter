@@ -62,7 +62,7 @@ AShooterCharacter::AShooterCharacter() ://initialize values with an initialize l
 	ShootTimeDuration(0.05f),//0.05
 	bFiringBullet(false),
 	//Automatic fire variables; remember to make this greater than crosshair interpolation time 0.05f
-	AutomaticFireRate(0.05f),//0.1
+	AutomaticFireRate(0.1f),//0.1
 	bShouldFire(true),
 	bFireButtonPressed(false),
 	//Item trace variables
@@ -75,7 +75,7 @@ AShooterCharacter::AShooterCharacter() ://initialize values with an initialize l
 	Starting9mmAmmo(85),
 	StartingARAmmo(120),
 	//Combat variables
-	CombatState(ECombatState::ECS_Unoccupied)
+	CombatState(ECombatState::ECS_Unoccupied)	
 	
 {
 	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
@@ -113,6 +113,18 @@ AShooterCharacter::AShooterCharacter() ://initialize values with an initialize l
 	// Create Hand Scene Component
 	HandSceneComponent = CreateDefaultSubobject<USceneComponent>(TEXT("HandSceneComp"));
 
+	// Create interpolation component for weapon
+	WeaponInterpComp = CreateDefaultSubobject<USceneComponent>(TEXT("Weapon Interpolation Component"));
+	WeaponInterpComp->SetupAttachment(GetFollowCamera());
+
+	// Create interpolation components for ammo	
+	
+	AmmoInterpComp0 = CreateDefaultSubobject<USceneComponent>(TEXT("Ammo Interpolation Component 0"));
+	AmmoInterpComp0->SetupAttachment(GetFollowCamera());
+	AmmoInterpComp1 = CreateDefaultSubobject<USceneComponent>(TEXT("Ammo Interpolation Component 1"));
+	AmmoInterpComp1->SetupAttachment(GetFollowCamera());
+	AmmoInterpComp2 = CreateDefaultSubobject<USceneComponent>(TEXT("Ammo Interpolation Component 2"));
+	AmmoInterpComp2->SetupAttachment(GetFollowCamera());
 }
 
 // Called when the game starts or when spawned
@@ -132,6 +144,9 @@ void AShooterCharacter::BeginPlay()
 	InitializeAmmoMap();
 
 	GetCharacterMovement()->MaxWalkSpeed = BaseMovementSpeed;
+
+	//Create FInterpLocation structs for each interp location. Add to array.
+	InitializeInterpLocations();
 
 	//UE_LOG Examples:
 	/*UE_LOG(LogTemp, Warning, TEXT("BeginPlay() called!"));//TEXT macro encoded in unicode - more characters
@@ -1065,11 +1080,7 @@ void AShooterCharacter::SelectButtonPressed()
 		//SwapWeapon(TraceHitWeapon);
 		if (TraceHitItem)
 		{
-			TraceHitItem->StartItemCurve(this);//shooter character pointer
-			if (TraceHitItem->GetPickupSound())
-			{
-				UGameplayStatics::PlaySound2D(this, TraceHitItem->GetPickupSound());
-			}
+			TraceHitItem->StartItemCurve(this);//shooter character pointer			
 		}
 	}
 	
@@ -1123,6 +1134,7 @@ void AShooterCharacter::IncrementOverlappedItemCount(int8 Amount)
 	}
 
 }
+/*No longer needed; AItem has GetInterpLocation
 FVector AShooterCharacter::GetCameraInterpLocation()
 {
 	const FVector CameraWorldLocation{ FollowCamera->GetComponentLocation() };
@@ -1133,7 +1145,7 @@ FVector AShooterCharacter::GetCameraInterpLocation()
 		FVector(0.f, 0.f, CameraInterpElevation);
 	//camera roll will be always 0, levelled with the ground, not tilted, we dont need camera up vector
 
-}
+}*/
 void AShooterCharacter::GetPickupItem(AItem* Item)
 {
 	auto Weapon = Cast<AWeapon>(Item);
@@ -1153,6 +1165,55 @@ void AShooterCharacter::GetPickupItem(AItem* Item)
 		PickupAmmo(Ammo);
 	}
 }
+void AShooterCharacter::InitializeInterpLocations()
+{
+	FInterpLocation WeaponLocation{ WeaponInterpComp,0 };//0- no item is interpolating when we first start
+	InterpLocations.Add(WeaponLocation);
+
+	FInterpLocation InterpLoc0{ AmmoInterpComp0, 0 };
+	InterpLocations.Add(InterpLoc0);
+	FInterpLocation InterpLoc1{ AmmoInterpComp1, 0 };
+	InterpLocations.Add(InterpLoc1);
+	FInterpLocation InterpLoc2{ AmmoInterpComp2, 0 };
+	InterpLocations.Add(InterpLoc2);
+
+}
+int32 AShooterCharacter::GetInterpLocationBestIndex()
+{//indexes 1 to 3 for ammo, 0 is for weapon in array
+
+	int32 LowestIndex = 1;//start index
+	int32 LowestCount = INT_MAX;//large number to overwrite with number of items interping to each InterpLocation
+
+	for (int32 i = 1; i < InterpLocations.Num(); i++)
+	{
+		if (InterpLocations[i].ItemCount < LowestCount)
+		{
+			LowestIndex = i;
+			LowestCount = InterpLocations[i].ItemCount;			
+		}
+	}
+
+	return LowestIndex;
+	//return int32();
+}
+void AShooterCharacter::IncrementInterpLocItemCount(int32 Index, int32 Amount)
+{
+	if (Amount < -1 || Amount>1) return;
+	if (InterpLocations.Num() >= Index)
+	{
+		InterpLocations[Index].ItemCount += Amount;
+	}
+}
+FInterpLocation AShooterCharacter::GetInterpLocation(int32 Index)
+{
+	if (Index <= InterpLocations.Num())
+	{
+		return InterpLocations[Index];
+	}
+
+	return FInterpLocation();
+}
+
 
 
 

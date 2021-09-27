@@ -19,6 +19,19 @@ enum class ECombatState :uint8
 	ECS_MAX UMETA(DisplayName = "DefaultMAX")
 };
 
+USTRUCT(BlueprintType)
+struct FInterpLocation
+{
+	GENERATED_BODY()
+
+		// Scene component to use for its location for interping
+	UPROPERTY(VisibleAnywhere,BlueprintReadOnly)
+	USceneComponent* SceneComponent;
+	//Number of items interping to at this scene cimp location
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	int32 ItemCount;
+
+};
 
 UCLASS()
 class SHOOTER_API AShooterCharacter : public ACharacter
@@ -132,7 +145,9 @@ protected:
 	void SwapWeapon(AWeapon* WeaponToSwap);
 	/** Picks up ammo */
 	void PickupAmmo(class AAmmo* Ammo);
-
+	/** Initializes the loctions for item pickup and interpolation */
+	void InitializeInterpLocations();
+	
 
 /* AMMO */
 
@@ -352,6 +367,25 @@ private:
 
 
 
+/* EQUIP */
+
+	/** Interp location for weapon */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
+	USceneComponent* WeaponInterpComp;// 
+	/** Interp locationd for ammo */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
+	USceneComponent* AmmoInterpComp0;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
+	USceneComponent* AmmoInterpComp1;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
+	USceneComponent* AmmoInterpComp2;
+	/** Array of interp location structs - how many items are interping to these locations at any time */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
+	TArray<FInterpLocation> InterpLocations;	
+	
+
+
+
 /* AMMO */
 
 	/** Map to keep track of ammo of different types */
@@ -412,8 +446,13 @@ public:
 	/** Adds/substracts to/from OverlappedItemCount and updates bShouldTraceForItems */
 	void IncrementOverlappedItemCount(int8 Amount);
 	/** A vector in front/up of the camera For Item Interp movement when picked up */
-	FVector GetCameraInterpLocation();
+	// No longer needed; AItem has GetInterpLocation
+	//FVector GetCameraInterpLocation();
 	void GetPickupItem(AItem* Item);
 	/** Used to prevent Aim Offset while reloading */
 	FORCEINLINE ECombatState GetCombatState() const { return CombatState; }
+	FInterpLocation GetInterpLocation(int32 Index);
+	/** Returns the index in interp location array with lowest item count (zero or minimum items interping to it) */
+	int32 GetInterpLocationBestIndex();
+	void IncrementInterpLocItemCount(int32 Index, int32 Amount);
 };

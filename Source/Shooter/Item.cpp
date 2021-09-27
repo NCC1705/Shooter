@@ -7,12 +7,15 @@
 #include "Components/SphereComponent.h"
 #include "ShooterCharacter.h"
 #include "Camera/CameraComponent.h"
+#include "Kismet/GameplayStatics.h"
+#include "Sound/SoundCue.h"
 // Sets default values
 AItem::AItem():
 	ItemName(FString("Default")),
 	ItemCount(0),
 	ItemRarity(EItemRarity::EIR_Common),
 	ItemState(EItemState::EIS_Pickup),
+	ItemType(EItemType::EIT_MAX),
 	//Item interp variables
 	ZCurveTime(0.7f),
 	ItemInterpStartLocation(FVector(0.f)),
@@ -20,7 +23,8 @@ AItem::AItem():
 	bInterping(false),
 	ItemInterpX(0.f),
 	ItemInterpY(0.f),
-	InterpInitialYawOffset(0.f)
+	InterpInitialYawOffset(0.f),
+	InterpLocIndex(0)
 
 {
  	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
@@ -214,6 +218,15 @@ void AItem::StartItemCurve(AShooterCharacter* Char)
 	
 	//Store a handle to the character
 	Character = Char;
+	//get array index in interplocations with the lowest item count
+	InterpLocIndex = Character->GetInterpLocationBestIndex();
+	//Add 1 to the item count for this interp location struct
+	Character->IncrementInterpLocItemCount(InterpLocIndex, 1);
+
+	if (PickupSound)
+	{
+		UGameplayStatics::PlaySound2D(this, PickupSound);
+	}
 
 	//Store initial location of the item
 	ItemInterpStartLocation = GetActorLocation();
@@ -228,6 +241,7 @@ void AItem::StartItemCurve(AShooterCharacter* Char)
 	const float CameraRotationYaw{ Character->GetFollowCamera()->GetComponentRotation().Yaw };
 	//Get initial Yaw of the Item
 	const float ItemRotationYaw{ GetActorRotation().Yaw };
+		
 	//Initial Yaw offset between Camera and Item; I prefer the item to face the camera sideways
 	//InterpInitialYawOffset = ItemRotationYaw - CameraRotationYaw;
 }
@@ -240,8 +254,9 @@ void AItem::FinishInterping()
 	bInterping = false;
 	if (Character)
 	{
+		//Substract 1 from the ItemCount of the interp location struct
+		Character->IncrementInterpLocItemCount(InterpLocIndex, -1);
 		Character->GetPickupItem(this);
-
 	}
 	// Set scale back to normal
 	SetActorScale3D(FVector(1.f));
@@ -259,7 +274,9 @@ void AItem::ItemInterp(float DeltaTime)
 		//Get the item's initial location when the curve started
 		FVector ItemLocation = ItemInterpStartLocation;
 		//Get location in front of the camera
-		const FVector CameraInterpLocation{ Character->GetCameraInterpLocation() };
+		const FVector CameraInterpLocation{ GetInterpLocation() };//Character->GetCameraInterpLocation()
+
+
 		// Vector from Item to Camera Interp Location, X and Y are zeroed out
 		const FVector ItemToCamera{ FVector(0.f,0.f,(CameraInterpLocation - ItemLocation).Z) };
 		// Scale factor to multiply with the Curve value
@@ -299,6 +316,22 @@ void AItem::ItemInterp(float DeltaTime)
 			SetActorScale3D(FVector(ScaleCurveValue));
 		}		
 	}
+}
+FVector AItem::GetInterpLocation()
+{
+	if (Character == nullptr) return FVector(0.f);
+	
+	switch (ItemType)
+	{
+	case EItemType::EIT_Ammo:
+		return Character->GetInterpLocation(InterpLocIndex).SceneComponent->GetComponentLocation();		
+	case EItemType::EIT_Weapon:
+		return Character->GetInterpLocation(0).SceneComponent->GetComponentLocation();		
+
+	default:
+		break;
+	}
+	return FVector();
 }
 
 

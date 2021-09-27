@@ -5,6 +5,7 @@
 #include "Components/BoxComponent.h"
 #include "Components/WidgetComponent.h"
 #include "Components/SphereComponent.h"
+#include "ShooterCharacter.h"
 
 AAmmo::AAmmo()
 {
@@ -19,10 +20,16 @@ AAmmo::AAmmo()
 	GetCollisionBox()->SetupAttachment(GetRootComponent());
 	GetPickupWidget()->SetupAttachment(GetRootComponent());
 	GetAreaSphere()->SetupAttachment(GetRootComponent());
+
+	AmmoCollisionSphere = CreateDefaultSubobject<USphereComponent>(TEXT("AmmpCollisionSphere"));
+	AmmoCollisionSphere->SetupAttachment(GetRootComponent()); 
+	AmmoCollisionSphere->SetSphereRadius(50.f);
 }
 void AAmmo::BeginPlay()
 {
 	Super::BeginPlay();
+	//Setup overlap for auto pickup sphere
+	AmmoCollisionSphere->OnComponentBeginOverlap.AddDynamic(this, &AAmmo::OnAmmoSphereOverlap);
 }
 void AAmmo::Tick(float DeltaTime)
 {
@@ -76,6 +83,19 @@ void AAmmo::SetItemProperties(EItemState State)
 		AmmoMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);	
 
 		break;		
+	}
+}
+void AAmmo::OnAmmoSphereOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
+{
+	if (OtherActor)
+	{
+		auto OverlappedCharacter = Cast<AShooterCharacter>(OtherActor);
+		if (OverlappedCharacter)
+		{
+			StartItemCurve(OverlappedCharacter);
+			//Avoid spam / multiple trigger - picking the ammo up multiple times
+			AmmoCollisionSphere->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+		}
 	}
 }
 

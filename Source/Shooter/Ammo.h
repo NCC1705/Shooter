@@ -26,6 +26,18 @@ protected:
 	/** Override of SetItemProperties so we can set AmmoMesh properties */
 	virtual void SetItemProperties(EItemState State) override;
 
+	void SphereCollisionOverlap();
+
+	/** Area sphere overlap to auto pickup */
+	UFUNCTION()// UFUNCTION to work with bindings
+	void OnAmmoSphereOverlap(
+		UPrimitiveComponent* OverlappedComponent,
+		AActor* OtherActor,
+		UPrimitiveComponent* OtherComp,
+		int32 OtherBodyIndex,
+		bool bFromSweep,
+		const FHitResult& SweepResult);
+
 
 private:
 	/** MEsh for the ammo pickup */
@@ -34,6 +46,12 @@ private:
 	/** Ammo type for the ammo*/
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Ammo, meta = (AllowPrivateAccess = "true"))
 	EAmmoType AmmoType;
+	/** Ammo Icon for the Pickup widget */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Ammo, meta = (AllowPrivateAccess = "true"))
+	UTexture2D* AmmoIconTexture;
+	/** Collision sphere overlap for auto ammo pickup */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Ammo, meta = (AllowPrivateAccess = "true"))
+	class USphereComponent* AmmoCollisionSphere;
 
 public:
 	FORCEINLINE UStaticMeshComponent* GetAmmoMesh() const { return AmmoMesh; }
