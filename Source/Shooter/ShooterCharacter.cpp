@@ -74,6 +74,11 @@ AShooterCharacter::AShooterCharacter() ://initialize values with an initialize l
 	//Starting ammo amounts
 	Starting9mmAmmo(85),
 	StartingARAmmo(120),
+	//Sound variables to prevent audio spam while picking up items
+	bShouldPlayPickupSound(true),
+	bShouldPlayEquipSound(true),
+	PickupSoundResetTime(0.2f),
+	EquipSoundResetTime(0.2f),
 	//Combat variables
 	CombatState(ECombatState::ECS_Unoccupied)	
 	
@@ -1148,16 +1153,19 @@ FVector AShooterCharacter::GetCameraInterpLocation()
 }*/
 void AShooterCharacter::GetPickupItem(AItem* Item)
 {
+
 	auto Weapon = Cast<AWeapon>(Item);
 	if (Weapon)
 	{
 		SwapWeapon(Weapon);
 	}	
 
-	if (Item->GetEquipSound())
+	Item->PlayEquipSound();
+
+	/*if (Item->GetEquipSound())
 	{
 		UGameplayStatics::PlaySound2D(this, Item->GetEquipSound());
-	}
+	}*/
 
 	auto Ammo = Cast<AAmmo>(Item);
 	if (Ammo)
@@ -1204,6 +1212,26 @@ void AShooterCharacter::IncrementInterpLocItemCount(int32 Index, int32 Amount)
 		InterpLocations[Index].ItemCount += Amount;
 	}
 }
+void AShooterCharacter::StartPickupSoundTimer()
+{
+	bShouldPlayPickupSound = false;
+
+	GetWorldTimerManager().SetTimer(
+		PickupSoundTimer,
+		this,
+		&AShooterCharacter::ResetPickupSoundTimer,
+		PickupSoundResetTime);
+}
+void AShooterCharacter::StartEquipSoundTimer()
+{
+	bShouldPlayEquipSound = false;
+
+	GetWorldTimerManager().SetTimer(
+		EquipSoundTimer,
+		this,
+		&AShooterCharacter::ResetEquipSoundTimer,
+		EquipSoundResetTime);
+}
 FInterpLocation AShooterCharacter::GetInterpLocation(int32 Index)
 {
 	if (Index <= InterpLocations.Num())
@@ -1213,7 +1241,14 @@ FInterpLocation AShooterCharacter::GetInterpLocation(int32 Index)
 
 	return FInterpLocation();
 }
-
+void AShooterCharacter::ResetPickupSoundTimer()
+{
+	bShouldPlayPickupSound = true;
+}
+void AShooterCharacter::ResetEquipSoundTimer()
+{
+	bShouldPlayEquipSound = true;
+}
 
 
 

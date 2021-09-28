@@ -382,7 +382,19 @@ private:
 	/** Array of interp location structs - how many items are interping to these locations at any time */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
 	TArray<FInterpLocation> InterpLocations;	
-	
+	//Sound variables and timers to prevent audio spam while picking up items
+	FTimerHandle PickupSoundTimer;
+	FTimerHandle EquipSoundTimer;
+	bool bShouldPlayPickupSound;
+	bool bShouldPlayEquipSound;
+	void ResetPickupSoundTimer();
+	void ResetEquipSoundTimer();
+	/** Time to wait before we play another pickup sound */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Items, meta = (AllowPrivateAccess = "true"))
+	float PickupSoundResetTime;
+	/** Time to wait before we play another equip sound */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Items, meta = (AllowPrivateAccess = "true"))
+	float EquipSoundResetTime;
 
 
 
@@ -455,4 +467,8 @@ public:
 	/** Returns the index in interp location array with lowest item count (zero or minimum items interping to it) */
 	int32 GetInterpLocationBestIndex();
 	void IncrementInterpLocItemCount(int32 Index, int32 Amount);
+	FORCEINLINE bool ShouldPlayPickupSound() const { return bShouldPlayPickupSound; }
+	FORCEINLINE bool ShouldPlayEquipSound() const { return bShouldPlayEquipSound; }
+	void StartPickupSoundTimer();
+	void StartEquipSoundTimer();
 };

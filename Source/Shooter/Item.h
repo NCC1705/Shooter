@@ -82,10 +82,17 @@ protected:
 	void ItemInterp(float DeltaTime);
 	/** Get interp location based on the item type */
 	FVector GetInterpLocation();
+	//Sound play at pickup
+	void PlayPickupSound();
+	
+
+
 
 public:	
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
+	//Sound play at equip; called in AShooterCharacter::GetPickupItem
+	void PlayEquipSound();
 
 private:
 
