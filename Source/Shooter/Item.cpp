@@ -73,6 +73,9 @@ void AItem::BeginPlay()
 	//Set Item properties based on ItemState
 	SetItemProperties(ItemState);
 
+	//Set custom depth to disable
+	InitializeCustomDepth();//on Ammo this calls the override versions
+
 }
 
 // Called every frame
@@ -357,6 +360,18 @@ void AItem::PlayEquipSound()
 			}
 		}
 	}
+}
+void AItem::EnableCustomDepth()
+{
+	ItemMesh->SetRenderCustomDepth(true);
+}
+void AItem::DisableCustomDepth()
+{
+	ItemMesh->SetRenderCustomDepth(false);
+}
+void AItem::InitializeCustomDepth()
+{
+	DisableCustomDepth();
 }
 
 

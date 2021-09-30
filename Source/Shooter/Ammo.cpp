@@ -98,6 +98,14 @@ void AAmmo::OnAmmoSphereOverlap(UPrimitiveComponent* OverlappedComponent, AActor
 		}
 	}
 }
+void AAmmo::EnableCustomDepth()
+{
+	AmmoMesh->SetRenderCustomDepth(true);
+}
+void AAmmo::DisableCustomDepth()
+{
+	AmmoMesh->SetRenderCustomDepth(false);
+}
 
 /*
 	EIS_Pickup UMETA(DisplayName = "Pickup"),

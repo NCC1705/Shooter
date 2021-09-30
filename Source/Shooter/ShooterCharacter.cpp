@@ -1002,6 +1002,7 @@ void AShooterCharacter::TraceForItems()
 			{
 				//Show Item's pickup widget
 				TraceHitItem->GetPickupWidget()->SetVisibility(true);
+				TraceHitItem->EnableCustomDepth();
 			}	
 			//we hit an AItem last frame
 			if (TraceHitItemLastFrame)
@@ -1009,6 +1010,7 @@ void AShooterCharacter::TraceForItems()
 				if (TraceHitItem != TraceHitItemLastFrame)//we are hitting a different item this frame, or AItem is null
 				{
 					TraceHitItemLastFrame->GetPickupWidget()->SetVisibility(false);
+					TraceHitItemLastFrame->DisableCustomDepth();
 				}
 			}
 			//Store a reference to hit item for next frame
@@ -1018,11 +1020,12 @@ void AShooterCharacter::TraceForItems()
 			
 		}
 	}
-	else if (TraceHitItemLastFrame)//we hit an AItem last frame
+	else if (TraceHitItemLastFrame)//we hit an AItem last frame, but bShouldTraceForItems is false- no longer inside trace sphere
 	{
 		//no longer ovelapping items
 		//item last frame should not show widget
 		TraceHitItemLastFrame->GetPickupWidget()->SetVisibility(false);
+		TraceHitItemLastFrame->DisableCustomDepth();
 	}
 }
 AWeapon* AShooterCharacter::SpawnDefaultWeapon()

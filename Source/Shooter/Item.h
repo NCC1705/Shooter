@@ -85,7 +85,8 @@ protected:
 	//Sound play at pickup
 	void PlayPickupSound();
 	
-
+	//enables custom depth for highlight and pickup effects	
+	virtual void InitializeCustomDepth();
 
 
 public:	
@@ -93,6 +94,7 @@ public:
 	virtual void Tick(float DeltaTime) override;
 	//Sound play at equip; called in AShooterCharacter::GetPickupItem
 	void PlayEquipSound();
+
 
 private:
 
@@ -205,4 +207,9 @@ public://GetSet
 //CURVES
 	/** Called from AShooterCharacter class */
 	void StartItemCurve(AShooterCharacter* Char);
+
+//EQUIP	
+	//enables custom depth for highlight and pickup effects
+	virtual void EnableCustomDepth();//virtual because ammo uses static vs skeletal mesh - will have to override in ammo
+	virtual void DisableCustomDepth();
 };

@@ -39,6 +39,7 @@ protected:
 		const FHitResult& SweepResult);
 
 
+
 private:
 	/** MEsh for the ammo pickup */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Ammo, meta = (AllowPrivateAccess="true"))
@@ -56,4 +57,8 @@ private:
 public:
 	FORCEINLINE UStaticMeshComponent* GetAmmoMesh() const { return AmmoMesh; }
 	FORCEINLINE EAmmoType GetAmmoType() const { return AmmoType; }
+
+	//custom depth for pickup object highlight and effects
+	virtual void EnableCustomDepth() override;
+	virtual void DisableCustomDepth() override;
 };
