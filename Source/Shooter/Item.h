@@ -51,7 +51,7 @@ public:
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
-
+	virtual void OnConstruction(const FTransform& Transform) override;
 
 
 /* ITEM HUD */
@@ -76,6 +76,11 @@ protected:
 	void SetActiveStars();
 	/** Sets properties of the item components based on State */
 	virtual void SetItemProperties(EItemState State);
+
+	
+	
+//EQUIP
+
 	/** Called when ItemInterpTimer is finished */
 	void FinishInterping();
 	/** Handles Item interpolation when we're in the EquipInterping state */
@@ -85,8 +90,17 @@ protected:
 	//Sound play at pickup
 	void PlayPickupSound();
 	
+
+
+//EFFECTS
+
 	//enables custom depth for highlight and pickup effects	
 	virtual void InitializeCustomDepth();
+	void EnableGlowMaterial();
+	void UpdatePulse();
+	void StartPulseTimer();
+	void ResetPulseTimer();
+
 
 
 public:	
@@ -185,7 +199,34 @@ private:
 	/** Sound played when item is equipped */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Item Properties", meta = (AllowPrivateAccess = "true"))
 	class USoundCue* EquipSound;
-
+	/** Index for the material we want to change at runtime */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Item Properties", meta = (AllowPrivateAccess = "true"))
+	int32 MaterialIndex;
+	/** Dynamic instance that we can change at runtime */
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Item Properties", meta = (AllowPrivateAccess = "true"))
+	UMaterialInstanceDynamic* DynamicMaterialInstance;//We use MaterialInstance in the DynamicMaterialInstance
+	/** Material Instance used with the dynamic material instance */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Item Properties", meta = (AllowPrivateAccess = "true"))
+	UMaterialInstance* MaterialInstance;//will select in blueprints
+	/** Prevent changing the custom depth when start interping */
+	bool bCanChangeCustomDepth;
+	/** Curve to drive the dynamic material parameters */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Item Properties", meta = (AllowPrivateAccess = "true"))
+	class UCurveVector* PulseCurve;
+	FTimerHandle PulseTimer;
+	/** Time for the pulse timer */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Item Properties", meta = (AllowPrivateAccess = "true"))
+	float PulseCurveTime;
+	/** Not set in blueprint, curve driven */
+	UPROPERTY(VisibleAnywhere, Category = "Item Properties", meta = (AllowPrivateAccess = "true"))
+	float GlowAmount;
+	/** Not set in blueprint, curve driven */
+	UPROPERTY(VisibleAnywhere, Category = "Item Properties", meta = (AllowPrivateAccess = "true"))
+	float FresnelExponent;
+	/** Not set in blueprint, curve driven */
+	UPROPERTY(VisibleAnywhere, Category = "Item Properties", meta = (AllowPrivateAccess = "true"))
+	float FresnelReflectFraction;
+	
 
 public://GetSet
 
@@ -212,4 +253,5 @@ public://GetSet
 	//enables custom depth for highlight and pickup effects
 	virtual void EnableCustomDepth();//virtual because ammo uses static vs skeletal mesh - will have to override in ammo
 	virtual void DisableCustomDepth();
+	void DisableGlowMaterial();
 };

@@ -9,6 +9,7 @@
 #include "Camera/CameraComponent.h"
 #include "Kismet/GameplayStatics.h"
 #include "Sound/SoundCue.h"
+#include "Curves/CurveVector.h"
 // Sets default values
 AItem::AItem():
 	ItemName(FString("Default")),
@@ -24,8 +25,14 @@ AItem::AItem():
 	ItemInterpX(0.f),
 	ItemInterpY(0.f),
 	InterpInitialYawOffset(0.f),
-	InterpLocIndex(0)
-
+	InterpLocIndex(0),	
+	MaterialIndex(0),
+	bCanChangeCustomDepth(true),
+	//Dynamic material parameters
+	GlowAmount(150.f),
+	FresnelExponent(3.f),
+	FresnelReflectFraction(4.0f),
+	PulseCurveTime(5.f)
 {
  	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
@@ -76,6 +83,17 @@ void AItem::BeginPlay()
 	//Set custom depth to disable
 	InitializeCustomDepth();//on Ammo this calls the override versions
 
+	StartPulseTimer();
+}
+
+void AItem::OnConstruction(const FTransform& Transform)
+{
+	if (MaterialInstance)
+	{
+		DynamicMaterialInstance = UMaterialInstanceDynamic::Create(MaterialInstance, this);
+		ItemMesh->SetMaterial(MaterialIndex, DynamicMaterialInstance);
+	}
+	EnableGlowMaterial();
 }
 
 // Called every frame
@@ -84,6 +102,8 @@ void AItem::Tick(float DeltaTime)
 	Super::Tick(DeltaTime);
 	// Handle Item Interping when in the EquipInterping state
 	ItemInterp(DeltaTime);
+	//Get Curve values from pulse curve and set dynamic material parameters
+	UpdatePulse();
 }
 
 
@@ -210,15 +230,21 @@ void AItem::SetItemProperties(EItemState State)
 		break;
 	}
 }
+
 void AItem::SetItemState(EItemState State)
 {
 	ItemState = State;
 	SetItemProperties(State);
 }
+
+
+
+
+/* EQUIP */
 void AItem::StartItemCurve(AShooterCharacter* Char)
 {
 	//Called from Character, passes a pointer to himself
-	
+
 	//Store a handle to the character
 	Character = Char;
 	//get array index in interplocations with the lowest item count
@@ -233,22 +259,19 @@ void AItem::StartItemCurve(AShooterCharacter* Char)
 	bInterping = true;
 	SetItemState(EItemState::EIS_EquipInterping);
 	GetWorldTimerManager().SetTimer(
-		ItemInterpTimer, 
-		this, 
-		&AItem::FinishInterping, 
+		ItemInterpTimer,
+		this,
+		&AItem::FinishInterping,
 		ZCurveTime);
 	//Get initial Yaw of the Camera
 	const float CameraRotationYaw{ Character->GetFollowCamera()->GetComponentRotation().Yaw };
 	//Get initial Yaw of the Item
 	const float ItemRotationYaw{ GetActorRotation().Yaw };
-		
+	bCanChangeCustomDepth = false;
+
 	//Initial Yaw offset between Camera and Item; I prefer the item to face the camera sideways
 	//InterpInitialYawOffset = ItemRotationYaw - CameraRotationYaw;
 }
-
-
-
-/* EQUIP */
 void AItem::FinishInterping()
 {
 	bInterping = false;
@@ -260,6 +283,9 @@ void AItem::FinishInterping()
 	}
 	// Set scale back to normal
 	SetActorScale3D(FVector(1.f));
+	DisableGlowMaterial();
+	bCanChangeCustomDepth = true;
+	DisableCustomDepth();	
 }
 void AItem::ItemInterp(float DeltaTime)
 {
@@ -363,15 +389,67 @@ void AItem::PlayEquipSound()
 }
 void AItem::EnableCustomDepth()
 {
-	ItemMesh->SetRenderCustomDepth(true);
+	if (bCanChangeCustomDepth)
+	{
+		ItemMesh->SetRenderCustomDepth(true);
+	}	
 }
 void AItem::DisableCustomDepth()
 {
-	ItemMesh->SetRenderCustomDepth(false);
+	if (bCanChangeCustomDepth)
+	{
+		ItemMesh->SetRenderCustomDepth(false);
+	}
 }
 void AItem::InitializeCustomDepth()
 {
 	DisableCustomDepth();
+}
+
+
+
+/* EFFECTS */
+void AItem::EnableGlowMaterial()
+{
+	if (DynamicMaterialInstance)
+	{
+		DynamicMaterialInstance->SetScalarParameterValue(TEXT("GlowBlendAlpha"), 0);
+	}
+}
+void AItem::StartPulseTimer()
+{
+	if (ItemState == EItemState::EIS_Pickup)
+	{
+		GetWorldTimerManager().SetTimer(
+			PulseTimer,
+			this,
+			&AItem::ResetPulseTimer,
+			PulseCurveTime);
+	}
+}
+void AItem::ResetPulseTimer()
+{
+	StartPulseTimer();
+}
+void AItem::UpdatePulse()
+{
+	if (ItemState != EItemState::EIS_Pickup) return;
+	
+	const float ElapsedTime{ GetWorldTimerManager().GetTimerElapsed(PulseTimer) };
+	if (PulseCurve) 
+	{
+		const FVector CurveValue{ PulseCurve->GetVectorValue(ElapsedTime) };
+		DynamicMaterialInstance->SetScalarParameterValue(TEXT("GlowAmount"), CurveValue.X * GlowAmount);
+		DynamicMaterialInstance->SetScalarParameterValue(TEXT("FresnelExponent"), CurveValue.Y * FresnelExponent);
+		DynamicMaterialInstance->SetScalarParameterValue(TEXT("FresnelReflectFraction"), CurveValue.Z * FresnelReflectFraction);
+	}
+}
+void AItem::DisableGlowMaterial()
+{
+	if (DynamicMaterialInstance)
+	{
+		DynamicMaterialInstance->SetScalarParameterValue(TEXT("GlowBlendAlpha"), 1);
+	}
 }
 
 

@@ -56,11 +56,13 @@ void AWeapon::ThrowWeapon()
 		this, 
 		&AWeapon::StopFalling, 
 		ThrowWeaponTime);
+	EnableGlowMaterial();
 }
 void AWeapon::StopFalling()//purpose is to reset bFalling flag after a delay
 {
 	bFalling = false;
 	SetItemState(EItemState::EIS_Pickup);
+	StartPulseTimer();
 }
 
 
