@@ -33,6 +33,11 @@ struct FInterpLocation
 
 };
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FEquipItemDelegate, int32, CurrentSlotIndex, int32, NewSlotIndex);
+//DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FEquipItemDelegate, int32, CurrentSlotIndex, int32, NewSlotIndex);
+
+
+
 UCLASS()
 class SHOOTER_API AShooterCharacter : public ACharacter
 {
@@ -147,7 +152,14 @@ protected:
 	void PickupAmmo(class AAmmo* Ammo);
 	/** Initializes the loctions for item pickup and interpolation */
 	void InitializeInterpLocations();
-	
+	/** Inventory keys - weapon select */
+	void FKeyPressed();
+	void OneKeyPressed();
+	void TwoKeyPressed();
+	void ThreeKeyPressed();
+	void FourKeyPressed();
+	void FiveKeyPressed();
+	void ExchangeInventoryItems(int32 CurrentItemIndex, int32 NewItemIndex);
 
 /* AMMO */
 
@@ -395,8 +407,14 @@ private:
 	/** Time to wait before we play another equip sound */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Items, meta = (AllowPrivateAccess = "true"))
 	float EquipSoundResetTime;
-
-
+	/* Array of AItems for Inventory */
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Inventory, meta = (AllowPrivateAccess = "true"))
+	TArray<AItem*> Inventory;
+	const int32 INVENTORY_CAPACITY{ 6 };
+	/** Delegate for sending slot information to inventory bar when equipping; broadcast when we equip a weapon */
+	UPROPERTY(BlueprintAssignable, Category = Delegates, meta = (AllowPrivateAccess = "true"))
+	FEquipItemDelegate EquipItemDelegate;
+	
 
 /* AMMO */
 
@@ -416,6 +434,9 @@ private:
 	/** Combat State, can only fire or reload if Unoccupied */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Combat, meta = (AllowPrivateAccess = "true"))//Set from C++
 	ECombatState CombatState;
+
+
+
 
 
 

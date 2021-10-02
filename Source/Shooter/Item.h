@@ -226,7 +226,23 @@ private:
 	/** Not set in blueprint, curve driven */
 	UPROPERTY(VisibleAnywhere, Category = "Item Properties", meta = (AllowPrivateAccess = "true"))
 	float FresnelReflectFraction;
-	
+	/** Curve to drive the dynamic material parameters */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Item Properties", meta = (AllowPrivateAccess = "true"))
+	UCurveVector* InterpPulseCurve;
+
+/* HUD */
+	/** Background image for this item for the Inventory / WeaponSlot widget */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Inventory, meta = (AllowPrivateAccess = "true"))
+	UTexture2D* IconBackground;
+	/** Image for this item for the Inventory / WeaponSlot widget */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Inventory, meta = (AllowPrivateAccess = "true"))
+	UTexture2D* IconItem;
+	/** Image for this item's ammo for the Inventory / WeaponSlot widget */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Inventory, meta = (AllowPrivateAccess = "true"))
+	UTexture2D* IconAmmo;
+	/** Slot in the inventory array */
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Inventory, meta = (AllowPrivateAccess = "true"))
+	int32 SlotIndex;
 
 public://GetSet
 
@@ -254,4 +270,6 @@ public://GetSet
 	virtual void EnableCustomDepth();//virtual because ammo uses static vs skeletal mesh - will have to override in ammo
 	virtual void DisableCustomDepth();
 	void DisableGlowMaterial();
+	FORCEINLINE  int32 GetSlotIndex() const { return SlotIndex; }
+	FORCEINLINE void SetSlotIndex(int32 Index) { SlotIndex = Index; }
 };
