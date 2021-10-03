@@ -86,6 +86,11 @@ private:
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = Combat, meta = (AllowPrivateAccess = "true"))
 	float RecoilWeight;
 
+	/** True when equipping */
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = Crouching, meta = (AllowPrivateAccess = "true"))
+	bool bEquipping;
+
+
 
 /* TURN IN PLACE */
 

@@ -918,6 +918,15 @@ void AShooterCharacter::FinishReloading()
 
 	ContinueFiringAfterReload();
 }
+void AShooterCharacter::FinishEquipping()
+{
+	//Update combat state
+	CombatState = ECombatState::ECS_Unoccupied;
+	if (bAimingButtonPressed)
+	{
+		Aim();
+	}
+}
 void AShooterCharacter::ContinueFiringAfterReload()
 {
 	if (WeaponHasAmmo())//My addition - continue firing after reload if button still pressed
@@ -1008,6 +1017,10 @@ void AShooterCharacter::TraceForItems()
 		if (ItemTraceResult.bBlockingHit)
 		{
 			TraceHitItem = Cast<AItem>(ItemTraceResult.Actor);//UE5 ItemTraceResult.GetActor()
+			if (TraceHitItem && TraceHitItem->GetItemState() == EItemState::EIS_EquipInterping)
+			{
+				TraceHitItem = nullptr;//already interping, cancel, avoid button spam
+			}
 			if (TraceHitItem && TraceHitItem->GetPickupWidget())
 			{
 				//Show Item's pickup widget
@@ -1105,11 +1118,13 @@ void AShooterCharacter::SelectButtonPressed()
 {
 	if (TraceHitItem)
 	{
+		if (CombatState != ECombatState::ECS_Unoccupied) return;
 		//auto TraceHitWeapon = Cast<AWeapon>(TraceHitItem);
 		//SwapWeapon(TraceHitWeapon);
 		if (TraceHitItem)
 		{
-			TraceHitItem->StartItemCurve(this);//shooter character pointer			
+			TraceHitItem->StartItemCurve(this);//shooter character pointer
+			TraceHitItem = nullptr;//prevents select button again and restart item curve
 		}
 	}
 	
@@ -1123,6 +1138,7 @@ void AShooterCharacter::SwapWeapon(AWeapon* WeaponToSwap)
 	if (Inventory.Num() - 1 >= EquippedWeapon->GetSlotIndex())
 	{
 		Inventory[EquippedWeapon->GetSlotIndex()] = WeaponToSwap;
+		WeaponToSwap->SetSlotIndex(EquippedWeapon->GetSlotIndex());
 	}
 	DropWeapon();
 	EquipWeapon(WeaponToSwap);
@@ -1189,7 +1205,6 @@ void AShooterCharacter::GetPickupItem(AItem* Item)
 			Weapon->SetSlotIndex(Inventory.Num());
 			Inventory.Add(Weapon);
 			Weapon->SetItemState(EItemState::EIS_PickedUp);
-
 		}
 		else //Inventory is full, swap with EquippedWeapon
 		{
@@ -1255,7 +1270,7 @@ void AShooterCharacter::FiveKeyPressed()
 }
 void AShooterCharacter::ExchangeInventoryItems(int32 CurrentItemIndex, int32 NewItemIndex)
 {
-	if (CurrentItemIndex == NewItemIndex|| NewItemIndex >= Inventory.Num()) return;
+	if (CurrentItemIndex == NewItemIndex || NewItemIndex >= Inventory.Num() || CombatState != ECombatState::ECS_Unoccupied) return;
 	
 	auto OndEquippedWeapon = EquippedWeapon;
 	auto NewWeapon = Cast<AWeapon>(Inventory[NewItemIndex]);
@@ -1263,6 +1278,16 @@ void AShooterCharacter::ExchangeInventoryItems(int32 CurrentItemIndex, int32 New
 
 	OndEquippedWeapon->SetItemState(EItemState::EIS_PickedUp);
 	NewWeapon->SetItemState(EItemState::EIS_Equipped);
+
+	CombatState = ECombatState::ECS_Equipping;
+	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
+	if (AnimInstance && EquipMontage)
+	{
+		AnimInstance->Montage_Play(EquipMontage);//(EquipMontage, 1.0f) but playrate is default value, not needed
+		AnimInstance->Montage_JumpToSection(FName("Equip"));//EquippedWeapon->GetEquipMontageSection()
+		
+	}
+
 }
 int32 AShooterCharacter::GetInterpLocationBestIndex()
 {//indexes 1 to 3 for ammo, 0 is for weapon in array

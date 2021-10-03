@@ -24,7 +24,8 @@ UShooterAnimInstance::UShooterAnimInstance():
 	Pitch(0.f),
 	bReloading(false),
 	OffsetState(EOffsetState::EOS_Hip),
-	bTurningInPlace(false)
+	bTurningInPlace(false),
+	bEquipping(false)
 {
 
 }
@@ -38,6 +39,11 @@ void UShooterAnimInstance::UpdateAnimationProperties(float DeltaTime)
 	}
 	if (ShooterCharacter)
 	{
+		bAiming = ShooterCharacter->GetAiming();
+		bCrouching = ShooterCharacter->GetCrouching();
+		bReloading = ShooterCharacter->GetCombatState() == ECombatState::ECS_Reloading;
+		bEquipping = ShooterCharacter->GetCombatState() == ECombatState::ECS_Equipping;
+
 		//Get the lateral speed of the character from velocity
 		FVector Velocity{ ShooterCharacter->GetVelocity() };
 		Velocity.Z = 0;//zero out the Z component because we want lateral component of velocity
@@ -64,11 +70,7 @@ void UShooterAnimInstance::UpdateAnimationProperties(float DeltaTime)
 		{
 			LastMovementOffsetYaw = MovementOffsetYaw;//to properly blend stop jog when no longer moving
 		}
-		
-		bAiming = ShooterCharacter->GetAiming();
-		bCrouching = ShooterCharacter->GetCrouching();
-		bReloading = ShooterCharacter->GetCombatState() == ECombatState::ECS_Reloading;
-
+		//############# allbBools from above
 		if (bReloading)
 		{
 			OffsetState = EOffsetState::EOS_Reloading;
@@ -189,7 +191,7 @@ void UShooterAnimInstance::TurnInPlace()
 	// Set Recoil Weight
 	if (bTurningInPlace)
 	{
-		if (bReloading)
+		if (bReloading || bEquipping)
 		{
 			RecoilWeight = 1.f;
 		}
@@ -202,7 +204,7 @@ void UShooterAnimInstance::TurnInPlace()
 	{
 		if (bCrouching)//idle crouching, not turning
 		{
-			if (bReloading)
+			if (bReloading || bEquipping)
 			{
 				RecoilWeight = 1.f;
 			}
@@ -214,7 +216,7 @@ void UShooterAnimInstance::TurnInPlace()
 		}
 		else
 		{
-			if (bAiming || bReloading)
+			if (bAiming || bReloading || bEquipping)
 			{
 				RecoilWeight = 1.f;
 			}
