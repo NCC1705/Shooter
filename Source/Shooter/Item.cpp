@@ -33,7 +33,8 @@ AItem::AItem():
 	FresnelExponent(3.f),
 	FresnelReflectFraction(4.0f),
 	PulseCurveTime(5.f),
-	SlotIndex(0)
+	SlotIndex(0),
+	bCharacterInventoryFull(false)
 {
  	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
@@ -130,6 +131,7 @@ void AItem::OnSphereEndOverlap(UPrimitiveComponent* OverlappedComponent, AActor*
 		if (ShooterCharacter)
 		{
 			ShooterCharacter->IncrementOverlappedItemCount(-1);
+			ShooterCharacter->UnhighlightInventorySlot();
 		}
 	}
 }
@@ -298,6 +300,7 @@ void AItem::FinishInterping()
 		//Substract 1 from the ItemCount of the interp location struct
 		Character->IncrementInterpLocItemCount(InterpLocIndex, -1);
 		Character->GetPickupItem(this);		
+		Character->UnhighlightInventorySlot();
 	}
 	// Set scale back to normal
 	SetActorScale3D(FVector(1.f));

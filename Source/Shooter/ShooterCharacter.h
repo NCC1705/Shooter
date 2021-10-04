@@ -35,9 +35,7 @@ struct FInterpLocation
 };
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FEquipItemDelegate, int32, CurrentSlotIndex, int32, NewSlotIndex);
-//DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FEquipItemDelegate, int32, CurrentSlotIndex, int32, NewSlotIndex);
-
-
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FHighlightIconDelegate, int32, SlotIndex, bool, bStartAnimation);
 
 UCLASS()
 class SHOOTER_API AShooterCharacter : public ACharacter
@@ -142,7 +140,7 @@ protected:
 	/** Spawns a default weapon and equips it*/
 	class AWeapon* SpawnDefaultWeapon();
 	/** Takes a weapon and attaches it to the skeletal mesh */
-	void EquipWeapon(AWeapon* WeaponToEquip );
+	void EquipWeapon(AWeapon* WeaponToEquip, bool bSwapping = false);
 	/** Detach weapon and let it fall to the ground */
 	void DropWeapon();
 	void SelectButtonPressed();
@@ -161,6 +159,10 @@ protected:
 	void FourKeyPressed();
 	void FiveKeyPressed();
 	void ExchangeInventoryItems(int32 CurrentItemIndex, int32 NewItemIndex);
+	int32 GetEmptyInventorySlot();
+	void HighlightInventorySlot();
+	
+
 
 /* AMMO */
 
@@ -418,7 +420,12 @@ private:
 	/** Delegate for sending slot information to inventory bar when equipping; broadcast when we equip a weapon */
 	UPROPERTY(BlueprintAssignable, Category = Delegates, meta = (AllowPrivateAccess = "true"))
 	FEquipItemDelegate EquipItemDelegate;
-	
+	/** Delegate for sending slot information for playing the icon animation; broadcast when we highlight a weapon */
+	UPROPERTY(BlueprintAssignable, Category = Delegates, meta = (AllowPrivateAccess = "true"))
+	FHighlightIconDelegate HighlightIconDelegate;
+	/** The index for the currently highlighted slot */
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Inventory, meta = (AllowPrivateAccess = "true"))
+	int32 HighlightedSlot;
 
 /* AMMO */
 
@@ -496,4 +503,5 @@ public:
 	FORCEINLINE bool ShouldPlayEquipSound() const { return bShouldPlayEquipSound; }
 	void StartPickupSoundTimer();
 	void StartEquipSoundTimer();
+	void UnhighlightInventorySlot();
 };

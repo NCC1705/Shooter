@@ -80,7 +80,9 @@ AShooterCharacter::AShooterCharacter() ://initialize values with an initialize l
 	PickupSoundResetTime(0.2f),
 	EquipSoundResetTime(0.2f),
 	//Combat variables
-	CombatState(ECombatState::ECS_Unoccupied)		
+	CombatState(ECombatState::ECS_Unoccupied),
+	//Icon animation property
+	HighlightedSlot(-1)
 {
 	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
@@ -1018,6 +1020,23 @@ void AShooterCharacter::TraceForItems()
 		if (ItemTraceResult.bBlockingHit)
 		{
 			TraceHitItem = Cast<AItem>(ItemTraceResult.Actor);//UE5 ItemTraceResult.GetActor()
+
+			const auto TraceHitWeapon = Cast<AWeapon>(TraceHitItem);//highlight inventory slot just for weapons, not ammo etc
+			if (TraceHitWeapon)
+			{
+				if (HighlightedSlot == -1)//default/fallback value, not currently highliting a slot
+				{
+					HighlightInventorySlot();
+				}
+			}
+			else //if a slot is highlighted
+			{
+				if (HighlightedSlot != -1)
+				{
+					UnhighlightInventorySlot();
+				}
+			}
+
 			if (TraceHitItem && TraceHitItem->GetItemState() == EItemState::EIS_EquipInterping)
 			{
 				TraceHitItem = nullptr;//already interping, cancel, avoid button spam
@@ -1027,6 +1046,16 @@ void AShooterCharacter::TraceForItems()
 				//Show Item's pickup widget
 				TraceHitItem->GetPickupWidget()->SetVisibility(true);
 				TraceHitItem->EnableCustomDepth();
+				if (Inventory.Num() >= INVENTORY_CAPACITY)
+				{
+					//inventory is full
+					TraceHitItem->SetCharacterInventoryFull(true);
+				}
+				else
+				{
+					//Inventory has room
+					TraceHitItem->SetCharacterInventoryFull(false);
+				}
 			}	
 			//we hit an AItem last frame
 			if (TraceHitItemLastFrame)
@@ -1077,7 +1106,7 @@ AWeapon* AShooterCharacter::SpawnDefaultWeapon()
 
 	return nullptr;
 }
-void AShooterCharacter::EquipWeapon(AWeapon* WeaponToEquip)
+void AShooterCharacter::EquipWeapon(AWeapon* WeaponToEquip, bool bSwapping)
 {
 	if (WeaponToEquip)
 	{	
@@ -1093,7 +1122,7 @@ void AShooterCharacter::EquipWeapon(AWeapon* WeaponToEquip)
 			//-1 no equipped weapon yet; no need to reverse the icon animation
 			EquipItemDelegate.Broadcast(-1, WeaponToEquip->GetSlotIndex());
 		}
-		else
+		else if(!bSwapping)
 		{
 			EquipItemDelegate.Broadcast(EquippedWeapon->GetSlotIndex(), WeaponToEquip->GetSlotIndex());
 		}
@@ -1142,7 +1171,7 @@ void AShooterCharacter::SwapWeapon(AWeapon* WeaponToSwap)
 		WeaponToSwap->SetSlotIndex(EquippedWeapon->GetSlotIndex());
 	}
 	DropWeapon();
-	EquipWeapon(WeaponToSwap);
+	EquipWeapon(WeaponToSwap, true);
 	TraceHitItem = nullptr;
 	TraceHitItemLastFrame = nullptr;//can no longer turn off label for item - so we must hide at equip
 }
@@ -1271,25 +1300,63 @@ void AShooterCharacter::FiveKeyPressed()
 }
 void AShooterCharacter::ExchangeInventoryItems(int32 CurrentItemIndex, int32 NewItemIndex)
 {
-	if (CurrentItemIndex == NewItemIndex || NewItemIndex >= Inventory.Num() || CombatState != ECombatState::ECS_Unoccupied) return;
+	//if (CurrentItemIndex == NewItemIndex || NewItemIndex >= Inventory.Num() || CombatState != ECombatState::ECS_Unoccupied) return;
 	
-	auto OndEquippedWeapon = EquippedWeapon;
-	auto NewWeapon = Cast<AWeapon>(Inventory[NewItemIndex]);
-	EquipWeapon(NewWeapon);
+	const bool bCanExchangeItems =
+		CurrentItemIndex != NewItemIndex &&
+		NewItemIndex < Inventory.Num() &&
+		CombatState == ECombatState::ECS_Unoccupied;
 
-	OndEquippedWeapon->SetItemState(EItemState::EIS_PickedUp);
-	NewWeapon->SetItemState(EItemState::EIS_Equipped);
-
-	CombatState = ECombatState::ECS_Equipping;
-	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
-	if (AnimInstance && EquipMontage)
+		//(CombatState == ECombatState::ECS_Unoccupied || CombatState == ECombatState::ECS_Equipping);
+		//for fast change while equipping - I don't like it, looks buggy
+	
+	if (bCanExchangeItems)
 	{
-		AnimInstance->Montage_Play(EquipMontage);//(EquipMontage, 1.0f) but playrate is default value, not needed
-		AnimInstance->Montage_JumpToSection(FName("Equip"));//EquippedWeapon->GetEquipMontageSection()		
+		auto OndEquippedWeapon = EquippedWeapon;
+		auto NewWeapon = Cast<AWeapon>(Inventory[NewItemIndex]);
+		EquipWeapon(NewWeapon);
+
+		OndEquippedWeapon->SetItemState(EItemState::EIS_PickedUp);
+		NewWeapon->SetItemState(EItemState::EIS_Equipped);
+
+		CombatState = ECombatState::ECS_Equipping;
+		UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
+		if (AnimInstance && EquipMontage)
+		{
+			AnimInstance->Montage_Play(EquipMontage);//(EquipMontage, 1.0f) but playrate is default value, not needed
+			AnimInstance->Montage_JumpToSection(FName("Equip"));//EquippedWeapon->GetEquipMontageSection()		
+		}
+		NewWeapon->PlayEquipSound(true);
+		//will not work for default weapon, with Character set to null, PlayEquipSound checks Character null
+		//we need to set the Character variable on the default weapon
+	}	
+}
+int32 AShooterCharacter::GetEmptyInventorySlot()
+{
+	for (int32 i = 0; i < Inventory.Num(); i++)
+	{
+		if (Inventory[i] == nullptr)
+		{
+			return i;//return first empty inventory slot
+		}
 	}
-	NewWeapon->PlayEquipSound(true);
-	//will not work for default weapon, with Character set to null, PlayEquipSound checks Character null
-	//we need to set the Character variable on the default weapon
+	if (Inventory.Num() < INVENTORY_CAPACITY)//looped trough all, none are null, but still not at capacity wtf?
+	{
+		return Inventory.Num();//returns next free slot, besides occupied
+	}
+
+	return -1; //inventory full //return int32();
+}
+void AShooterCharacter::HighlightInventorySlot()
+{
+	const int32 EmptySlot{ GetEmptyInventorySlot() };
+	HighlightIconDelegate.Broadcast(EmptySlot, true);
+	HighlightedSlot = EmptySlot;
+}
+void AShooterCharacter::UnhighlightInventorySlot()
+{
+	HighlightIconDelegate.Broadcast(HighlightedSlot, false);
+	HighlightedSlot = -1;
 }
 int32 AShooterCharacter::GetInterpLocationBestIndex()
 {//indexes 1 to 3 for ammo, 0 is for weapon in array
