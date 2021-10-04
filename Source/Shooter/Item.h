@@ -88,7 +88,7 @@ protected:
 	/** Get interp location based on the item type */
 	FVector GetInterpLocation();
 	//Sound play at pickup
-	void PlayPickupSound();
+	void PlayPickupSound(bool bForcePlaySound = false);
 	
 
 
@@ -107,8 +107,8 @@ public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 	//Sound play at equip; called in AShooterCharacter::GetPickupItem
-	void PlayEquipSound();
-
+	void PlayEquipSound(bool bForcePlaySound = false);	
+	//when we give a function a default value for a parameter, parameter is optional, we can omit it when calling the function
 
 private:
 
@@ -263,7 +263,7 @@ public://GetSet
 
 //CURVES
 	/** Called from AShooterCharacter class */
-	void StartItemCurve(AShooterCharacter* Char);
+	void StartItemCurve(AShooterCharacter* Char, bool bForcePlaySound = false);//params with default values have to be last
 
 //EQUIP	
 	//enables custom depth for highlight and pickup effects
@@ -272,4 +272,5 @@ public://GetSet
 	void DisableGlowMaterial();
 	FORCEINLINE  int32 GetSlotIndex() const { return SlotIndex; }
 	FORCEINLINE void SetSlotIndex(int32 Index) { SlotIndex = Index; }
+	FORCEINLINE void SetCharacter(AShooterCharacter* Char) { Character = Char; }
 };

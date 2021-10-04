@@ -148,7 +148,8 @@ void AShooterCharacter::BeginPlay()
 	EquippedWeapon->SetSlotIndex(0);
 	EquippedWeapon->DisableCustomDepth();
 	EquippedWeapon->DisableGlowMaterial();
-
+	EquippedWeapon->SetCharacter(this);//PlayEquipSound will not work if Character is null
+		
 	InitializeAmmoMap();
 
 	GetCharacterMovement()->MaxWalkSpeed = BaseMovementSpeed;
@@ -1123,7 +1124,7 @@ void AShooterCharacter::SelectButtonPressed()
 		//SwapWeapon(TraceHitWeapon);
 		if (TraceHitItem)
 		{
-			TraceHitItem->StartItemCurve(this);//shooter character pointer
+			TraceHitItem->StartItemCurve(this, true);//shooter character pointer
 			TraceHitItem = nullptr;//prevents select button again and restart item curve
 		}
 	}
@@ -1284,10 +1285,11 @@ void AShooterCharacter::ExchangeInventoryItems(int32 CurrentItemIndex, int32 New
 	if (AnimInstance && EquipMontage)
 	{
 		AnimInstance->Montage_Play(EquipMontage);//(EquipMontage, 1.0f) but playrate is default value, not needed
-		AnimInstance->Montage_JumpToSection(FName("Equip"));//EquippedWeapon->GetEquipMontageSection()
-		
+		AnimInstance->Montage_JumpToSection(FName("Equip"));//EquippedWeapon->GetEquipMontageSection()		
 	}
-
+	NewWeapon->PlayEquipSound(true);
+	//will not work for default weapon, with Character set to null, PlayEquipSound checks Character null
+	//we need to set the Character variable on the default weapon
 }
 int32 AShooterCharacter::GetInterpLocationBestIndex()
 {//indexes 1 to 3 for ammo, 0 is for weapon in array
