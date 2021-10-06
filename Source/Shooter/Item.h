@@ -262,10 +262,10 @@ private:
 	//UTexture2D* IconBackground;//moved to data table; was mockup here
 	/** Image for this item for the Inventory / WeaponSlot widget */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Inventory, meta = (AllowPrivateAccess = "true"))
-	UTexture2D* IconItem;
+	UTexture2D* ItemIcon;
 	/** Image for this item's ammo for the Inventory / WeaponSlot widget */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Inventory, meta = (AllowPrivateAccess = "true"))
-	UTexture2D* IconAmmo;
+	UTexture2D* AmmoIcon;
 	/** Slot in the inventory array */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Inventory, meta = (AllowPrivateAccess = "true"))
 	int32 SlotIndex;
@@ -306,9 +306,20 @@ public://GetSet
 	void SetItemState(EItemState State);
 	FORCEINLINE int32 GetItemCount() const { return ItemCount; }
 
+// DATA TABLE ITEMS
+	FORCEINLINE void SetItemName(FString Name) { ItemName = Name; }//IconItem IconAmmo
+	/** Set Item Icon for the inventory */
+	FORCEINLINE void SetItemIcon(UTexture2D* Icon) { ItemIcon = Icon; }
+	/** Set Ammo Icon for the inventory */
+	FORCEINLINE void SetAmmoIcon(UTexture2D* Icon) { AmmoIcon = Icon; }
+
+
+
 //AUDIO
 	FORCEINLINE USoundCue* GetPickupSound() const { return PickupSound; }
+	FORCEINLINE void SetPickupSound(USoundCue* Sound) { PickupSound = Sound; }
 	FORCEINLINE USoundCue* GetEquipSound() const { return EquipSound; }
+	FORCEINLINE void SetEquipSound(USoundCue* Sound) { EquipSound = Sound; }
 
 //CURVES
 	/** Called from AShooterCharacter class */

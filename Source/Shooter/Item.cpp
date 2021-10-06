@@ -94,7 +94,7 @@ void AItem::OnConstruction(const FTransform& Transform)//construction script
 	// Load the data in the Item Rarity Data Table; updates when changing rarity
 
 	// Path to the Item Rarity Data Table	
-	FString RarityTablePath(TEXT("DataTable'/Game/_Game/DataTables/ItemRarityDataTable.ItemRarityDataTable'"));
+	const FString RarityTablePath(TEXT("DataTable'/Game/_Game/DataTables/ItemRarityDataTable.ItemRarityDataTable'"));//const ???
 	UDataTable* RarityTableObject = Cast<UDataTable>(StaticLoadObject(UDataTable::StaticClass(), nullptr, *RarityTablePath));
 	//*RarityTablePath C-Style string, * operator prepending it
 	if (RarityTableObject)
