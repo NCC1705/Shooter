@@ -59,7 +59,7 @@ struct FItemRarityTable : public FTableRowBase
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	UTexture2D* IconBackground;
-
+	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	int32 CustomDepthStencil;
 };
@@ -312,8 +312,16 @@ public://GetSet
 	FORCEINLINE void SetItemIcon(UTexture2D* Icon) { ItemIcon = Icon; }
 	/** Set Ammo Icon for the inventory */
 	FORCEINLINE void SetAmmoIcon(UTexture2D* Icon) { AmmoIcon = Icon; }
-
-
+	/** Get Set (Dynamic) Material Instance for item pickup glow */
+	FORCEINLINE void SetMaterialInstance(UMaterialInstance* Instance) { MaterialInstance = Instance; }
+	FORCEINLINE UMaterialInstance* GetMaterialInstance() const { return MaterialInstance; }
+	FORCEINLINE void SetDynamicMaterialInstance(UMaterialInstanceDynamic* Instance) { DynamicMaterialInstance = Instance; }
+	FORCEINLINE UMaterialInstanceDynamic* GetDynamicMaterialInstance() const { return DynamicMaterialInstance; }
+	/** Get GlowColor for item pickup glow */
+	FORCEINLINE FLinearColor GetGlowColor() const { return GlowColor; }
+	/** Get Set Material Index for item pickup glow */
+	FORCEINLINE int32 GetMaterialIndex() const { return MaterialIndex; }
+	FORCEINLINE void SetMaterialIndex(int32 Index) { MaterialIndex = Index; }
 
 //AUDIO
 	FORCEINLINE USoundCue* GetPickupSound() const { return PickupSound; }

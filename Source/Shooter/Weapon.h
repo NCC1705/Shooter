@@ -6,16 +6,8 @@
 #include "Item.h"
 #include "AmmoType.h"
 #include "Engine/DataTable.h"
-#include "Weapon.generated.h"
-
-UENUM(BlueprintType)
-enum class EWeaponType :uint8
-{
-	EWT_SubmachineGun UMETA(DisplayName ="SubmachineGun"),
-	EWT_AssaultRifle UMETA(DisplayName = "AssaultRifle"),
-
-	EWT_MAX UMETA(DisplayName = "DefaultMAX")
-};
+#include "WeaponType.h"
+#include "Weapon.generated.h"//last one always
 
 USTRUCT(BlueprintType)
 struct FWeaponDataTable : public FTableRowBase
@@ -51,6 +43,12 @@ struct FWeaponDataTable : public FTableRowBase
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	UTexture2D* AmmoIcon;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UMaterialInstance* MaterialInstance;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	int32 MaterialIndex;
 };
 
 
@@ -99,6 +97,8 @@ private://private variables
 	/** Name for the clip bone */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Weapon Properties", meta = (AllowPrivateAccess = "true"))
 	FName ClipBoneName;
+	/** Material Index for clearing at weapon type change OnConstruct, otherwise the former dynamic material remains set */
+	int32 PreviousMaterialIndex;
 
 /* SPECS */
 
@@ -114,6 +114,8 @@ private://private variables
 	/** DataTable for weapon properties */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = DataTable, meta = (AllowPrivateAccess = "true"))
 	UDataTable* WeaponDataTable;
+
+
 
 public://getters setters
 

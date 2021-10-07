@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "Animation/AnimInstance.h"
+#include "WeaponType.h"
 #include "ShooterAnimInstance.generated.h"
 
 UENUM(BlueprintType)
@@ -44,7 +45,7 @@ private:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Movement, meta = (AllowPrivateAccess = "true"))
 	class AShooterCharacter* ShooterCharacter;
 
-/* MOVE */
+/* MOVE private */
 
 	/** Character speed */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Movement, meta = (AllowPrivateAccess = "true"))
@@ -77,7 +78,7 @@ private:
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = Crouching, meta = (AllowPrivateAccess = "true"))
 	bool bCrouching;
 
-/* AIM & FIRE */
+/* AIM & FIRE private */
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Movement, meta = (AllowPrivateAccess = "true"))
 	bool bAiming;
@@ -92,7 +93,7 @@ private:
 
 
 
-/* TURN IN PLACE */
+/* TURN IN PLACE private */
 
 	/** Yaw of the character this frame for turn in place - only updated when standing still / not in air */
 	float CharacterYawTurn;
@@ -114,8 +115,16 @@ private:
 	/** Offset State used to determine which Offset State to use in animation */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Turn In Place", meta = (AllowPrivateAccess = "true"))
 	EOffsetState OffsetState;
-
 	/** True when turning in place */
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Turn In Place", meta = (AllowPrivateAccess = "true"))
 	bool bTurningInPlace;
+
+
+
+/* EQUIP private */
+
+	/** True when turning in place */
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = Combat, meta = (AllowPrivateAccess = "true"))
+	EWeaponType EquippedWeaponType;
+
 };

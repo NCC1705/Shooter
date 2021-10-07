@@ -5,6 +5,9 @@
 #include "ShooterCharacter.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Kismet/KismetMathLibrary.h"
+#include "Weapon.h"
+#include "WeaponType.h"
+
 
 UShooterAnimInstance::UShooterAnimInstance():
 
@@ -25,7 +28,8 @@ UShooterAnimInstance::UShooterAnimInstance():
 	bReloading(false),
 	OffsetState(EOffsetState::EOS_Hip),
 	bTurningInPlace(false),
-	bEquipping(false)
+	bEquipping(false),
+	EquippedWeaponType(EWeaponType::EWT_SubmachineGun)
 {
 
 }
@@ -87,6 +91,14 @@ void UShooterAnimInstance::UpdateAnimationProperties(float DeltaTime)
 		{
 			OffsetState = EOffsetState::EOS_Hip;
 		}
+
+		//Check if shooter character has a valid equipped weapon
+
+		if (ShooterCharacter->GetEquippedWeapon()) 
+		{
+			EquippedWeaponType = ShooterCharacter->GetEquippedWeapon()->GetWeaponType();
+		}
+
 		/*FString RotationMessage = FString::Printf(TEXT("Base Aim Rotation: %f"), AimRotation.Yaw);
 		FString MovementRotationMessage = FString::Printf(TEXT("Movement Rotation: %f"), MovementRotation.Yaw);	
 		FString OffsetMessage = FString::Printf(TEXT("Movement Offset Yaw: %f"), MovementOffsetYaw);

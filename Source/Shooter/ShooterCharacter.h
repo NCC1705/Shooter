@@ -504,4 +504,5 @@ public:
 	void StartPickupSoundTimer();
 	void StartEquipSoundTimer();
 	void UnhighlightInventorySlot();
+	FORCEINLINE AWeapon* GetEquippedWeapon()const { return EquippedWeapon; }
 };
