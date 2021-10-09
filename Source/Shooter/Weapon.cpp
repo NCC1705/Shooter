@@ -3,7 +3,8 @@
 
 #include "Weapon.h"
 
-AWeapon::AWeapon():
+AWeapon::AWeapon()
+	:
 	ThrowWeaponTime(.7f),
 	bFalling(false),
 	Ammo(30),
@@ -105,6 +106,8 @@ void AWeapon::OnConstruction(const FTransform& Transform)
 			PreviousMaterialIndex = GetMaterialIndex();
 			GetItemMesh()->SetMaterial(PreviousMaterialIndex, nullptr);
 			SetMaterialIndex(WeaponDataRow->MaterialIndex);
+			SetClipBoneName(WeaponDataRow->ClipBoneName);
+			SetReloadMontageSection(WeaponDataRow->ReloadMontageSection);
 		}
 
 		if (GetMaterialInstance())//copied from Item.cpp OnConstruction
