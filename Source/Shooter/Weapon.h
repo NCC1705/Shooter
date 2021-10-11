@@ -55,6 +55,21 @@ struct FWeaponDataTable : public FTableRowBase
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	FName ReloadMontageSection;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	TSubclassOf<UAnimInstance> AnimBP;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UTexture2D* CrosshairsMiddle;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+		UTexture2D* CrosshairsLeft;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+		UTexture2D* CrosshairsRight;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+		UTexture2D* CrosshairsBottom;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+		UTexture2D* CrosshairsTop;
+
 };
 
 
@@ -72,16 +87,15 @@ public:
 
 protected://protected functions
 
-/* EQUIP */
-
 	void StopFalling();//get into pickup state
 	virtual void OnConstruction(const FTransform& Transform) override;
+
 
 private://private variables
 
 	
 
-/* EQUIP */
+/* EQUIP private */
 
 	FTimerHandle ThrowWeaponTimer;
 	float ThrowWeaponTime;
@@ -89,7 +103,7 @@ private://private variables
 
 
 
-/* AMMO */
+/* AMMO private */
 
 	/** Ammo count for this Weapon */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Weapon Properties", meta=(AllowPrivateAccess="true"))
@@ -106,7 +120,7 @@ private://private variables
 	/** Material Index for clearing at weapon type change OnConstruct, otherwise the former dynamic material remains set */
 	int32 PreviousMaterialIndex;
 
-/* SPECS */
+/* SPECS private */
 
 	/** Type of Weapon */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Weapon Properties", meta = (AllowPrivateAccess = "true"))
@@ -120,12 +134,23 @@ private://private variables
 	/** DataTable for weapon properties */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = DataTable, meta = (AllowPrivateAccess = "true"))
 	UDataTable* WeaponDataTable;
-
-
+		
+/* UI private */
+	/** Weapon Crosshairs Textures */
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = DataTable, meta = (AllowPrivateAccess = "true"))
+		UTexture2D* CrosshairsMiddle;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = DataTable, meta = (AllowPrivateAccess = "true"))
+		UTexture2D* CrosshairsLeft;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = DataTable, meta = (AllowPrivateAccess = "true"))
+		UTexture2D* CrosshairsRight;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = DataTable, meta = (AllowPrivateAccess = "true"))
+		UTexture2D* CrosshairsBottom;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = DataTable, meta = (AllowPrivateAccess = "true"))
+		UTexture2D* CrosshairsTop;
 
 public://getters setters
 
-/* EQUIP */
+/* EQUIP public */
 
 	/** Adds an impulse to the weapon */
 	void ThrowWeapon();

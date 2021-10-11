@@ -53,7 +53,7 @@ protected:
 	virtual void BeginPlay() override;
 
 
-/* MOVE */
+/* MOVE protected */
 
 	/** Called for forwards/backwards input */
 	void MoveForward(float Value);
@@ -64,7 +64,7 @@ protected:
 	/** Interps capsule half height when crouching/standing */
 	void InterpCapsuleHalfHeight(float DeltaTime);
 
-/** TURN LOOK UP */
+/** TURN LOOK UP protected */
 
 	/**
 	* Called via input to turn at a given rate.
@@ -89,7 +89,7 @@ protected:
 
 
 
-/*  AIM & FIRE */
+/*  AIM & FIRE protected */
 
 	/** Called when the fire button is pressed */
 	void FireWeapon();
@@ -133,7 +133,7 @@ protected:
 	void StopAiming();
 	
 
-/* EQUIP*/
+/* EQUIP protected */
 
 	/** Trace for items if OverlappedItemCount >0 */
 	void TraceForItems();
@@ -164,7 +164,7 @@ protected:
 	
 
 
-/* AMMO */
+/* AMMO protected */
 
 	/** Initialize the Ammo Map with ammo values */
 	void InitializeAmmoMap();
@@ -185,7 +185,7 @@ private:
 
 
 
-/* CAMERA */
+/* CAMERA private */
 
 	/*Camera boom positioning the camera behind the character
 	macro marks varialbe for garbage collection + exposes to BP using specifiers
@@ -202,7 +202,7 @@ private:
 
 
 
-/* MOVE */
+/* MOVE private */
 
 	/** True wen crouching */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Movement, meta = (AllowPrivateAccess = "true"))
@@ -229,7 +229,7 @@ private:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Movement, meta = (AllowPrivateAccess = "true"))
 	float CrouchingGroundFriction;
 
-/** TURN LOOK UP */
+/** TURN LOOK UP private */
 
 	/** Base turn rate in degrees per second. Other scaling may affect final turn rate */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
@@ -272,7 +272,7 @@ private:
 
 
 
-/* EFFECTS */
+/* EFFECTS private */
 
 	/** Randomized gunshot sound cue */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Combat, meta = (AllowPrivateAccess = "true"))
@@ -289,7 +289,7 @@ private:
 
 	
 	
-/* ANIMATION */
+/* ANIMATION private */
 
 	/** Montage for firing the weapon */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Combat, meta = (AllowPrivateAccess = "true"))
@@ -311,7 +311,7 @@ private:
 	UFUNCTION(BlueprintCallable)
 	void FinishEquipping();
 
-/* AIM & FIRE */
+/* AIM & FIRE private */
 
 	/** True when aiming */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Combat, meta = (AllowPrivateAccess = "true"))
@@ -357,7 +357,7 @@ private:
 	bool bAimingButtonPressed;
 	
 
-/* TRACE FOR ITEMS */
+/* TRACE FOR ITEMS private */
 
 	/** True if we should trace every frame for items */
 	bool bShouldTraceForItems;
@@ -385,7 +385,7 @@ private:
 
 
 
-/* EQUIP */
+/* EQUIP private */
 
 	/** Interp location for weapon */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
@@ -427,7 +427,7 @@ private:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Inventory, meta = (AllowPrivateAccess = "true"))
 	int32 HighlightedSlot;
 
-/* AMMO */
+/* AMMO private */
 
 	/** Map to keep track of ammo of different types */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Items, meta = (AllowPrivateAccess = "true"))
@@ -440,7 +440,7 @@ private:
 	int32 StartingARAmmo;	
 
 
-/* COMBAT */
+/* COMBAT private */
 
 	/** Combat State, can only fire or reload if Unoccupied */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Combat, meta = (AllowPrivateAccess = "true"))//Set from C++
@@ -451,19 +451,19 @@ private:
 
 
 
-/* DEBUG */
+/* DEBUG private */
 	FDateTime LastFireTime;
 	
 
 public:
 
-/* MOVE */
+/* MOVE public */
 
 	FORCEINLINE bool GetCrouching() const { return bCrouching; }
 
 
 
-/* CAMERA */
+/* CAMERA public */
 
 	/** Returns CameraBoom subobject */
 	FORCEINLINE USpringArmComponent* GetCameraBoom() const { return CameraBoom; }
@@ -476,7 +476,7 @@ public:
 
 
 
-/*  AIM */
+/*  AIM public */
 
 	FORCEINLINE bool GetAiming() const { return bAiming; }
 	UFUNCTION(BlueprintCallable)
@@ -484,7 +484,7 @@ public:
 
 
 
-/* EQUIP */
+/* EQUIP public */
 
 	FORCEINLINE int8 GetOverlappedItemCount() const { return OverlappedItemCount; }
 	/** Adds/substracts to/from OverlappedItemCount and updates bShouldTraceForItems */
