@@ -60,9 +60,7 @@ AShooterCharacter::AShooterCharacter() ://initialize values with an initialize l
 	CrosshairShootingFactor(0.f),
 	//Bullet fire timer varialbes
 	ShootTimeDuration(0.05f),//0.05
-	bFiringBullet(false),
-	//Automatic fire variables; remember to make this greater than crosshair interpolation time 0.05f
-	AutomaticFireRate(0.1f),//0.1
+	bFiringBullet(false),//remember to make automatic fire rate greater than crosshair interpolation time 0.05f	
 	bShouldFire(true),
 	bFireButtonPressed(false),
 	//Item trace variables
@@ -520,13 +518,15 @@ void AShooterCharacter::FireButtonReleased()
 }
 void AShooterCharacter::StartFireTimer()
 {//prevents button spam, firing as fast as user can click
+	if (EquippedWeapon == nullptr) return;
+
 	CombatState = ECombatState::ECS_FireTimerInProgress;
 
 	GetWorldTimerManager().SetTimer(
 		AutoFireTimer,
 		this,
 		&AShooterCharacter::AutoFireReset,
-		AutomaticFireRate);
+		EquippedWeapon->GetAutoFireRate());
 	
 	/*FTimespan TimeSpan = LastFireTime - FDateTime().Now();
 	int32 TotalMilliseconds = TimeSpan.GetTotalMilliseconds();
@@ -675,10 +675,10 @@ void AShooterCharacter::CameraInterpZoom(float DeltaTime)
 void AShooterCharacter::PlayFireSound()
 {
 	//Play fire sound
-	if (FireSound)
+	if (EquippedWeapon->GetFireSound())
 	{
 		//Ctrl Shift Space to see the parameters
-		UGameplayStatics::PlaySound2D(this, FireSound);
+		UGameplayStatics::PlaySound2D(this, EquippedWeapon->GetFireSound());
 	}
 }
 void AShooterCharacter::SendBullet()
@@ -689,9 +689,9 @@ void AShooterCharacter::SendBullet()
 	{
 		const FTransform SocketTransform = BarrelSocket->GetSocketTransform(EquippedWeapon->GetItemMesh());
 
-		if (MuzzleFlash)
+		if (EquippedWeapon->GetMuzzleFlash())
 		{
-			UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), MuzzleFlash, SocketTransform);
+			UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), EquippedWeapon->GetMuzzleFlash(), SocketTransform);
 		}
 
 		FVector BeamEnd;

@@ -13,54 +13,60 @@ USTRUCT(BlueprintType)
 struct FWeaponDataTable : public FTableRowBase
 {
 	GENERATED_BODY()//get all built in reflection code generated
+//
+UPROPERTY(EditAnywhere, BlueprintReadWrite)
+USkeletalMesh* ItemMesh;
 
+	//Weapon Specs
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	EAmmoType AmmoType;
-	
+		EAmmoType AmmoType;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	int32 WeaponAmmo;
-	
+		int32 WeaponAmmo;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	int32 MagazineCapacity;
-	
+		int32 MagazineCapacity;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	class USoundCue* PickupSound;
-	
+		float AutoFireRate;
+
+
+	// Sound
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	USoundCue* EquipSound;
-	
+		class USoundCue* PickupSound;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+		USoundCue* EquipSound;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+		USoundCue* FireSound;
+
 	//UPROPERTY(EditAnywhere, BlueprintReadWrite)//Set in BaseWeaponBP, invarialbe for all weapons
 	//class UWidgetComponent* PickupWidget;
 	
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	USkeletalMesh* ItemMesh;
-	
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	FString ItemName;
 
+	// Animations	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)//reload
+		FName ClipBoneName;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	UTexture2D* ItemIcon;
+		FName ReloadMontageSection;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+		TSubclassOf<UAnimInstance> AnimBP;
 
+	// Effects
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)//item highlight
+		UMaterialInstance* MaterialInstance;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	UTexture2D* AmmoIcon;
+		int32 MaterialIndex;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	class UParticleSystem* MuzzleFlash;
 
+	// UI
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	UMaterialInstance* MaterialInstance;
+		FString ItemName;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+		UTexture2D* ItemIcon;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+		UTexture2D* AmmoIcon;
 
+	// UI Crosshairs
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	int32 MaterialIndex;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	FName ClipBoneName;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	FName ReloadMontageSection;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	TSubclassOf<UAnimInstance> AnimBP;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	UTexture2D* CrosshairsMiddle;
+		UTexture2D* CrosshairsMiddle;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 		UTexture2D* CrosshairsLeft;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
@@ -69,6 +75,7 @@ struct FWeaponDataTable : public FTableRowBase
 		UTexture2D* CrosshairsBottom;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 		UTexture2D* CrosshairsTop;
+
 
 };
 
@@ -134,8 +141,11 @@ private://private variables
 	/** DataTable for weapon properties */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = DataTable, meta = (AllowPrivateAccess = "true"))
 	UDataTable* WeaponDataTable;
-		
-/* UI private */
+	/** Automatic fire speed */
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = DataTable, meta = (AllowPrivateAccess = "true"))
+	float AutoFireRate;
+
+/* UI Crosshair private */
 	/** Weapon Crosshairs Textures */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = DataTable, meta = (AllowPrivateAccess = "true"))
 		UTexture2D* CrosshairsMiddle;
@@ -147,6 +157,16 @@ private://private variables
 		UTexture2D* CrosshairsBottom;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = DataTable, meta = (AllowPrivateAccess = "true"))
 		UTexture2D* CrosshairsTop;
+	
+// EFFECTS private
+	/** Particle System spawned at the barrel socket*/
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = DataTable, meta = (AllowPrivateAccess = "true"))
+	class UParticleSystem* MuzzleFlash;
+
+// SOUND private
+	/** Sound played when the weapon is fired */
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = DataTable, meta = (AllowPrivateAccess = "true"))
+	class USoundCue* FireSound;
 
 public://getters setters
 
@@ -174,4 +194,10 @@ public://getters setters
 	FORCEINLINE EAmmoType GetAmmoType() const { return AmmoType; }	
 	FORCEINLINE FName GetReloadMontageSection() const { return ReloadMontageSection; }
 	FORCEINLINE void  SetReloadMontageSection(FName Name) { ReloadMontageSection = Name; }
+
+	FORCEINLINE float GetAutoFireRate() const { return AutoFireRate; }	
+	FORCEINLINE UParticleSystem* GetMuzzleFlash() const { return MuzzleFlash; }
+	FORCEINLINE USoundCue* GetFireSound() const { return FireSound; }
+
+
 };

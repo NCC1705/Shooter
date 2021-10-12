@@ -25,7 +25,7 @@ struct FInterpLocation
 {
 	GENERATED_BODY()
 
-		// Scene component to use for its location for interping
+	// Scene component to use for its location for interping
 	UPROPERTY(VisibleAnywhere,BlueprintReadOnly)
 	USceneComponent* SceneComponent;
 	//Number of items interping to at this scene cimp location
@@ -273,13 +273,7 @@ private:
 
 
 /* EFFECTS private */
-
-	/** Randomized gunshot sound cue */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Combat, meta = (AllowPrivateAccess = "true"))
-	class USoundCue* FireSound;
-	/** Flash spawned at barrel socket */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Combat, meta = (AllowPrivateAccess = "true"))
-	class UParticleSystem* MuzzleFlash;	
+	
 	/** Particles spawned upon bullet impact */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Combat, meta = (AllowPrivateAccess = "true"))
 	UParticleSystem* ImpactParticles;//already forward declared 2 vars up
@@ -348,9 +342,7 @@ private:
 	/** Left mouse button or right console trigger pressed*/
 	bool bFireButtonPressed;
 	/** True when we can fire. False while waiting for the timer*/
-	bool bShouldFire;
-	/** Rate of automatic gun fire */
-	float AutomaticFireRate;
+	bool bShouldFire;	
 	/** Sets a timer between gunshots */
 	FTimerHandle AutoFireTimer;
 	/** Used for knowing when the aiming button is pressed */
@@ -389,7 +381,7 @@ private:
 
 	/** Interp location for weapon */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
-	USceneComponent* WeaponInterpComp;// 
+	USceneComponent* WeaponInterpComp;
 	/** Interp locationd for ammo */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
 	USceneComponent* AmmoInterpComp0;

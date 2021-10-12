@@ -74,9 +74,9 @@ Plugins/*/Intermediate/*
 DerivedDataCache/*
 
 # Purchased or sizeable Asset Store Content 
+Content/_Game/Assets/*
 Content/AnimStarterPack/*
 Content/FPS_Weapon_Bundle/*
 Content/ParagonLtBelica/*
 Content/PolygonCity/*
 Content/Z_Extra/*
-
