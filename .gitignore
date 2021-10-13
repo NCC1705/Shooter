@@ -74,9 +74,13 @@ Plugins/*/Intermediate/*
 DerivedDataCache/*
 
 # Purchased or sizeable Asset Store Content 
+_aux/*
 Content/_Game/Assets/*
 Content/AnimStarterPack/*
 Content/FPS_Weapon_Bundle/*
 Content/ParagonLtBelica/*
 Content/PolygonCity/*
 Content/Z_Extra/*
+
+# https://www.udemy.com/course/unreal-engine-the-ultimate-shooter-course/
+# Unreal Engine C++ The Ultimate Shooter Course - Stephen Ulibarri

@@ -18,6 +18,88 @@ AWeapon::AWeapon()
 	PrimaryActorTick.bCanEverTick = true;
 }
 
+void AWeapon::OnConstruction(const FTransform& Transform)
+{
+	Super::OnConstruction(Transform);//functionality in item
+
+	const FString WeaponTablePath(TEXT("DataTable'/Game/_Game/DataTables/WeaponDataTable.WeaponDataTable'"));
+	UDataTable* WeaponTableObject = Cast<UDataTable>(StaticLoadObject(UDataTable::StaticClass(), nullptr, *WeaponTablePath));
+
+	if (WeaponTableObject)
+	{
+		FWeaponDataTable* WeaponDataRow = nullptr;
+		switch (WeaponType)
+		{
+		case EWeaponType::EWT_Pistol:
+			WeaponDataRow = WeaponTableObject->FindRow<FWeaponDataTable>(FName("Pistol"), TEXT(""));
+			break;
+		case EWeaponType::EWT_SubmachineGun:
+			WeaponDataRow = WeaponTableObject->FindRow<FWeaponDataTable>(FName("SubmachineGun"), TEXT(""));
+			break;
+		case EWeaponType::EWT_AssaultRifle:
+			WeaponDataRow = WeaponTableObject->FindRow<FWeaponDataTable>(FName("AssaultRifle"), TEXT(""));
+			break;
+		case EWeaponType::EWT_MAX:
+			break;
+		default:
+			break;
+		}
+
+		if (WeaponDataRow)
+		{
+			AmmoType = WeaponDataRow->AmmoType;
+			Ammo = WeaponDataRow->WeaponAmmo;
+			MagazineCapacity = WeaponDataRow->MagazineCapacity;
+			SetPickupSound(WeaponDataRow->PickupSound);
+			SetEquipSound(WeaponDataRow->EquipSound);
+			GetItemMesh()->SetSkeletalMesh(WeaponDataRow->ItemMesh);
+			SetItemName(WeaponDataRow->ItemName);
+			SetItemIcon(WeaponDataRow->ItemIcon);
+			SetAmmoIcon(WeaponDataRow->AmmoIcon);
+
+			SetMaterialInstance(WeaponDataRow->MaterialInstance);
+			//clear the previous material index before setting the new one
+			PreviousMaterialIndex = GetMaterialIndex();
+			GetItemMesh()->SetMaterial(PreviousMaterialIndex, nullptr);
+			SetMaterialIndex(WeaponDataRow->MaterialIndex);
+			SetClipBoneName(WeaponDataRow->ClipBoneName);
+			SetReloadMontageSection(WeaponDataRow->ReloadMontageSection);
+			GetItemMesh()->SetAnimInstanceClass(WeaponDataRow->AnimBP);
+			CrosshairsMiddle = WeaponDataRow->CrosshairsMiddle;
+			CrosshairsLeft = WeaponDataRow->CrosshairsLeft;
+			CrosshairsRight = WeaponDataRow->CrosshairsRight;
+			CrosshairsBottom = WeaponDataRow->CrosshairsBottom;
+			CrosshairsTop = WeaponDataRow->CrosshairsTop;
+			AutoFireRate = WeaponDataRow->AutoFireRate;
+			MuzzleFlash = WeaponDataRow->MuzzleFlash;
+			FireSound = WeaponDataRow->FireSound;
+			BoneToHide = WeaponDataRow->BoneToHide;			
+		}
+
+		if (GetMaterialInstance())//copied from Item.cpp OnConstruction
+		{
+			SetDynamicMaterialInstance(UMaterialInstanceDynamic::Create(GetMaterialInstance(), this));
+			GetDynamicMaterialInstance()->SetVectorParameterValue(TEXT("FresnelColor"), GetGlowColor());
+			GetItemMesh()->SetMaterial(GetMaterialIndex(), GetDynamicMaterialInstance());
+
+			EnableGlowMaterial();
+		}
+
+	}
+
+
+}
+
+void AWeapon::BeginPlay()
+{
+	Super::BeginPlay();
+	if (BoneToHide != FName(""))
+	{
+		GetItemMesh()->HideBoneByName(BoneToHide, EPhysBodyOp::PBO_None);//physics body option
+	}
+	GetItemMesh()->HideBoneByName(BoneToHide, EPhysBodyOp::PBO_None);
+}
+
 void AWeapon::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
@@ -64,73 +146,6 @@ void AWeapon::StopFalling()//purpose is to reset bFalling flag after a delay
 	bFalling = false;
 	SetItemState(EItemState::EIS_Pickup);
 	StartPulseTimer();
-}
-void AWeapon::OnConstruction(const FTransform& Transform)
-{
-	Super::OnConstruction(Transform);//functionality in item
-
-	const FString WeaponTablePath(TEXT("DataTable'/Game/_Game/DataTables/WeaponDataTable.WeaponDataTable'"));
-	UDataTable* WeaponTableObject = Cast<UDataTable>(StaticLoadObject(UDataTable::StaticClass(), nullptr, *WeaponTablePath));
-
-	if (WeaponTableObject)
-	{
-		FWeaponDataTable* WeaponDataRow = nullptr;
-		switch (WeaponType)
-		{
-		case EWeaponType::EWT_SubmachineGun:
-			WeaponDataRow = WeaponTableObject->FindRow<FWeaponDataTable>(FName("SubmachineGun"), TEXT(""));
-			break;
-		case EWeaponType::EWT_AssaultRifle:
-			WeaponDataRow = WeaponTableObject->FindRow<FWeaponDataTable>(FName("AssaultRifle"), TEXT(""));
-			break;
-		case EWeaponType::EWT_MAX:
-			break;
-		default:
-			break;
-		}
-
-		if (WeaponDataRow)
-		{
-			AmmoType = WeaponDataRow->AmmoType;
-			Ammo = WeaponDataRow->WeaponAmmo;
-			MagazineCapacity = WeaponDataRow->MagazineCapacity;
-			SetPickupSound(WeaponDataRow->PickupSound);
-			SetEquipSound(WeaponDataRow->EquipSound);
-			GetItemMesh()->SetSkeletalMesh(WeaponDataRow->ItemMesh);
-			SetItemName(WeaponDataRow->ItemName);
-			SetItemIcon(WeaponDataRow->ItemIcon);
-			SetAmmoIcon(WeaponDataRow->AmmoIcon);
-
-			SetMaterialInstance(WeaponDataRow->MaterialInstance);
-			//clear the previous material index before setting the new one
-			PreviousMaterialIndex = GetMaterialIndex();
-			GetItemMesh()->SetMaterial(PreviousMaterialIndex, nullptr);
-			SetMaterialIndex(WeaponDataRow->MaterialIndex);
-			SetClipBoneName(WeaponDataRow->ClipBoneName);
-			SetReloadMontageSection(WeaponDataRow->ReloadMontageSection);
-			GetItemMesh()->SetAnimInstanceClass(WeaponDataRow->AnimBP);
-			CrosshairsMiddle = WeaponDataRow->CrosshairsMiddle;
-			CrosshairsLeft = WeaponDataRow->CrosshairsLeft;
-			CrosshairsRight = WeaponDataRow->CrosshairsRight;
-			CrosshairsBottom = WeaponDataRow->CrosshairsBottom;
-			CrosshairsTop = WeaponDataRow->CrosshairsTop;
-			AutoFireRate = WeaponDataRow->AutoFireRate;
-			MuzzleFlash = WeaponDataRow->MuzzleFlash;
-			FireSound = WeaponDataRow->FireSound;			
-		}
-
-		if (GetMaterialInstance())//copied from Item.cpp OnConstruction
-		{
-			SetDynamicMaterialInstance (UMaterialInstanceDynamic::Create(GetMaterialInstance(), this));
-			GetDynamicMaterialInstance()->SetVectorParameterValue(TEXT("FresnelColor"), GetGlowColor());
-			GetItemMesh()->SetMaterial(GetMaterialIndex(), GetDynamicMaterialInstance());
-
-			EnableGlowMaterial();
-		}
-
-	}
-
-	
 }
 
 

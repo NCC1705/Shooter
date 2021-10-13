@@ -47,6 +47,9 @@ USkeletalMesh* ItemMesh;
 		FName ReloadMontageSection;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 		TSubclassOf<UAnimInstance> AnimBP;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	FName BoneToHide;
+
 
 	// Effects
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)//item highlight
@@ -96,7 +99,7 @@ protected://protected functions
 
 	void StopFalling();//get into pickup state
 	virtual void OnConstruction(const FTransform& Transform) override;
-
+	virtual void BeginPlay() override;
 
 private://private variables
 
@@ -167,6 +170,12 @@ private://private variables
 	/** Sound played when the weapon is fired */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = DataTable, meta = (AllowPrivateAccess = "true"))
 	class USoundCue* FireSound;
+
+// ANIMATION private
+	/** Name of the bone to hi */
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = DataTable, meta = (AllowPrivateAccess = "true"))
+	FName BoneToHide;
+
 
 public://getters setters
 

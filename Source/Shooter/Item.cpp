@@ -295,7 +295,6 @@ void AItem::SetItemProperties(EItemState State)
 		break;
 	}
 }
-
 void AItem::SetItemState(EItemState State)
 {
 	ItemState = State;
@@ -410,7 +409,7 @@ void AItem::ItemInterp(float DeltaTime)
 		}		
 	}
 }
-FVector AItem::GetInterpLocation()
+FVector AItem::GetInterpLocation()//differentiates between weapon and ammo pickup interp end locations
 {
 	if (Character == nullptr) return FVector(0.f);
 	
