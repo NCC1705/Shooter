@@ -90,7 +90,7 @@ AShooterCharacter::AShooterCharacter() ://initialize values with an initialize l
 	CameraBoom->SetupAttachment(RootComponent);
 	CameraBoom->TargetArmLength = 240.0f;//180 character follow distance
 	CameraBoom->bUsePawnControlRotation = true;//rotate the arm based on the controller
-	CameraBoom->SocketOffset = FVector(0.f, 35.f, 80.f);//50,70
+	CameraBoom->SocketOffset = FVector(0.f, 50.f, 80.f);//50,70//0.f, 35.f, 80.f
 
 	//pleasant when moving, detrimental when aiming
 	//CameraBoom->bEnableCameraLag = true;
@@ -1311,12 +1311,12 @@ void AShooterCharacter::ExchangeInventoryItems(int32 CurrentItemIndex, int32 New
 		//for fast change while equipping - I don't like it, looks buggy
 	
 	if (bCanExchangeItems)
-	{
-		auto OndEquippedWeapon = EquippedWeapon;
+	{		
+		auto OldEquippedWeapon = EquippedWeapon;
 		auto NewWeapon = Cast<AWeapon>(Inventory[NewItemIndex]);
 		EquipWeapon(NewWeapon);
 
-		OndEquippedWeapon->SetItemState(EItemState::EIS_PickedUp);
+		OldEquippedWeapon->SetItemState(EItemState::EIS_PickedUp);
 		NewWeapon->SetItemState(EItemState::EIS_Equipped);
 
 		CombatState = ECombatState::ECS_Equipping;
@@ -1326,7 +1326,7 @@ void AShooterCharacter::ExchangeInventoryItems(int32 CurrentItemIndex, int32 New
 			AnimInstance->Montage_Play(EquipMontage);//(EquipMontage, 1.0f) but playrate is default value, not needed
 			AnimInstance->Montage_JumpToSection(FName("Equip"));//EquippedWeapon->GetEquipMontageSection()		
 		}
-		NewWeapon->PlayEquipSound(true);
+		NewWeapon->PlayEquipSound(true);				
 		//will not work for default weapon, with Character set to null, PlayEquipSound checks Character null
 		//we need to set the Character variable on the default weapon
 	}	
