@@ -12,7 +12,13 @@ AWeapon::AWeapon()
 	WeaponType(EWeaponType::EWT_SubmachineGun),
 	AmmoType(EAmmoType::EAT_9mm),
 	ReloadMontageSection(FName(TEXT("Reload SMG"))),
-	ClipBoneName(TEXT("smg_clip"))
+	ClipBoneName(TEXT("smg_clip")),
+	SlideDisplacement(0.f),
+	SlideDisplacementTime(0.3f),//correlate with weapon fire rate from data table
+	bMovingSlide(false),
+	MaxSlideDisplacement(2.f),
+	MaxRecoilRotation(20.0f),
+	RecoilRotation(0.f)
 
 {
 	PrimaryActorTick.bCanEverTick = true;
@@ -110,6 +116,8 @@ void AWeapon::Tick(float DeltaTime)
 		const FRotator MeshRotation{ 0.f,GetItemMesh()->GetComponentRotation().Yaw,0.f };
 		GetItemMesh()->SetWorldRotation(MeshRotation, false, nullptr, ETeleportType::TeleportPhysics);
 	}
+	// Update slide on pistol
+	UpdateSlideDisplacement();
 }
 
 
@@ -173,4 +181,34 @@ void AWeapon::ReloadAmmo(int32 Amount)
 bool AWeapon::ClipIsFull()
 {
 	return Ammo >= MagazineCapacity;
+}
+
+
+
+/* ANIMATION */
+
+void AWeapon::FinishMovingSlide()
+{
+	bMovingSlide = false;
+}
+
+void AWeapon::StartSlideTimer()
+{
+	//called from ShooterCharacter.cpp FireWeapon()
+	bMovingSlide = true;
+	GetWorldTimerManager().SetTimer(
+		SlideTimer, 
+		this, 
+		&AWeapon::FinishMovingSlide, 
+		SlideDisplacementTime);
+}
+void AWeapon::UpdateSlideDisplacement()
+{
+	if (SlideDisplacementCurve && bMovingSlide)
+	{
+		const float ElapsedTime{ GetWorldTimerManager().GetTimerElapsed(SlideTimer) };
+		const float CurveValue{ SlideDisplacementCurve->GetFloatValue(ElapsedTime) };
+		SlideDisplacement = CurveValue * MaxSlideDisplacement;
+		RecoilRotation = CurveValue * MaxRecoilRotation;
+	}
 }

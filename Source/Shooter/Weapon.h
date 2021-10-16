@@ -90,7 +90,7 @@ UCLASS()
 class SHOOTER_API AWeapon : public AItem
 {
 	GENERATED_BODY()
-	
+
 public:
 	AWeapon();//constructor
 	virtual void Tick(float DeltaTime) override;
@@ -100,10 +100,12 @@ protected://protected functions
 	void StopFalling();//get into pickup state
 	virtual void OnConstruction(const FTransform& Transform) override;
 	virtual void BeginPlay() override;
-
+	/* ANIMATION */
+	void FinishMovingSlide();
+	void UpdateSlideDisplacement();
 private://private variables
 
-	
+
 
 /* EQUIP private */
 
@@ -113,43 +115,43 @@ private://private variables
 
 
 
-/* AMMO private */
+	/* AMMO private */
 
-	/** Ammo count for this Weapon */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Weapon Properties", meta=(AllowPrivateAccess="true"))
-	int32 Ammo;
+		/** Ammo count for this Weapon */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Weapon Properties", meta = (AllowPrivateAccess = "true"))
+		int32 Ammo;
 	/** Clip size - max Ammo the Weapon can hold */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Weapon Properties", meta = (AllowPrivateAccess = "true"))
-	int32 MagazineCapacity;
+		int32 MagazineCapacity;
 	/** True when moving the clip while reloading */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Weapon Properties", meta = (AllowPrivateAccess = "true"))
-	bool bMovingClip;
+		bool bMovingClip;
 	/** Name for the clip bone */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Weapon Properties", meta = (AllowPrivateAccess = "true"))
-	FName ClipBoneName;
+		FName ClipBoneName;
 	/** Material Index for clearing at weapon type change OnConstruct, otherwise the former dynamic material remains set */
 	int32 PreviousMaterialIndex;
 
-/* SPECS private */
+	/* SPECS private */
 
-	/** Type of Weapon */
+		/** Type of Weapon */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Weapon Properties", meta = (AllowPrivateAccess = "true"))
-	EWeaponType WeaponType;
+		EWeaponType WeaponType;
 	/** Type of Ammo used by this Weapon */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Weapon Properties", meta = (AllowPrivateAccess = "true"))
-	EAmmoType AmmoType;
+		EAmmoType AmmoType;
 	/** FName for the Reload Montage section */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Weapon Properties", meta = (AllowPrivateAccess = "true"))
-	FName ReloadMontageSection;
+		FName ReloadMontageSection;
 	/** DataTable for weapon properties */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = DataTable, meta = (AllowPrivateAccess = "true"))
-	UDataTable* WeaponDataTable;
+		UDataTable* WeaponDataTable;
 	/** Automatic fire speed */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = DataTable, meta = (AllowPrivateAccess = "true"))
-	float AutoFireRate;
+		float AutoFireRate;
 
-/* UI Crosshair private */
-	/** Weapon Crosshairs Textures */
+	/* UI Crosshair private */
+		/** Weapon Crosshairs Textures */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = DataTable, meta = (AllowPrivateAccess = "true"))
 		UTexture2D* CrosshairsMiddle;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = DataTable, meta = (AllowPrivateAccess = "true"))
@@ -160,34 +162,54 @@ private://private variables
 		UTexture2D* CrosshairsBottom;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = DataTable, meta = (AllowPrivateAccess = "true"))
 		UTexture2D* CrosshairsTop;
-	
-// EFFECTS private
-	/** Particle System spawned at the barrel socket*/
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = DataTable, meta = (AllowPrivateAccess = "true"))
-	class UParticleSystem* MuzzleFlash;
 
-// SOUND private
-	/** Sound played when the weapon is fired */
+	// EFFECTS private
+		/** Particle System spawned at the barrel socket*/
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = DataTable, meta = (AllowPrivateAccess = "true"))
-	class USoundCue* FireSound;
+		class UParticleSystem* MuzzleFlash;
 
-// ANIMATION private
-	/** Name of the bone to hi */
+	// SOUND private
+		/** Sound played when the weapon is fired */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = DataTable, meta = (AllowPrivateAccess = "true"))
-	FName BoneToHide;
+		class USoundCue* FireSound;
+
+	// ANIMATION private
+		/** Name of the bone to hi */
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = DataTable, meta = (AllowPrivateAccess = "true"))
+		FName BoneToHide;
+	// Pistol animation variables
+	// Amount that the pistol slide is pushed back during firing
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Pistol, meta = (AllowPrivateAccess = "true"))
+		float SlideDisplacement;
+	// Curve for the pistol slide displacement
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Pistol, meta = (AllowPrivateAccess = "true"))
+	UCurveFloat* SlideDisplacementCurve;	
+	/** Timer handle for updating SlideDisplacement */
+	FTimerHandle SlideTimer;
+	/** Time for SlideDisplacement */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Pistol, meta = (AllowPrivateAccess = "true"))
+	float SlideDisplacementTime;
+	/** True when moving pistol slide*/
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Pistol, meta = (AllowPrivateAccess = "true"))
+	bool bMovingSlide;
+	/** Pistol Slide Displacement in centimeters */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Pistol, meta = (AllowPrivateAccess = "true"))
+	float MaxSlideDisplacement;
+	/** Max rotation for pistol recoil */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Pistol, meta = (AllowPrivateAccess = "true"))
+	float MaxRecoilRotation;
+	/* Pistol rotate amount during pistol fire */
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Pistol, meta = (AllowPrivateAccess = "true"))
+		float RecoilRotation;
 
 
 public://getters setters
 
 /* EQUIP public */
-
 	/** Adds an impulse to the weapon */
 	void ThrowWeapon();
 
-
-
-/* AMMO */
-
+	/* AMMO */
 	FORCEINLINE int32 GetAmmo() const { return Ammo; }
 	FORCEINLINE int32 GetMagazineCapacity() const { return MagazineCapacity; }
 	/** Call from Character class when firing Weapon */
@@ -198,15 +220,16 @@ public://getters setters
 	FORCEINLINE void SetMovingClip(bool Move) { bMovingClip = Move; }
 	bool ClipIsFull();
 
-/* SPECS */
+	/* SPECS */
 	FORCEINLINE EWeaponType GetWeaponType() const { return WeaponType; }
-	FORCEINLINE EAmmoType GetAmmoType() const { return AmmoType; }	
+	FORCEINLINE EAmmoType GetAmmoType() const { return AmmoType; }
 	FORCEINLINE FName GetReloadMontageSection() const { return ReloadMontageSection; }
 	FORCEINLINE void  SetReloadMontageSection(FName Name) { ReloadMontageSection = Name; }
 
-	FORCEINLINE float GetAutoFireRate() const { return AutoFireRate; }	
+	FORCEINLINE float GetAutoFireRate() const { return AutoFireRate; }
 	FORCEINLINE UParticleSystem* GetMuzzleFlash() const { return MuzzleFlash; }
 	FORCEINLINE USoundCue* GetFireSound() const { return FireSound; }
-
-
+	
+	/* ANIMATION */
+	void StartSlideTimer();
 };

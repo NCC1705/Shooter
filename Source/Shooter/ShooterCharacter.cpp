@@ -570,6 +570,12 @@ void AShooterCharacter::FireWeapon()
 
 		StartFireTimer();
 
+		if (EquippedWeapon->GetWeaponType() == EWeaponType::EWT_Pistol)
+		{
+			//start moving slide timer
+			EquippedWeapon->StartSlideTimer();
+		}
+
 		//StartCrosshairBulletFire();//start bullet fire timer for crosshairs
 	}
 }
