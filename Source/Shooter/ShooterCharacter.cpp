@@ -537,10 +537,10 @@ void AShooterCharacter::StartFireTimer()
 void AShooterCharacter::AutoFireReset()
 {
 	CombatState = ECombatState::ECS_Unoccupied;
-
+	if (EquippedWeapon == nullptr) return;//check if weapon became null in the meantime
 	if (WeaponHasAmmo())
-	{
-		if (bFireButtonPressed)
+	{	//normally, no need to chech EquippedWeapon nullptr, fireWeapon checks
+		if (bFireButtonPressed && EquippedWeapon->GetAutomatic())
 		{
 			FireWeapon();
 		}
@@ -634,7 +634,8 @@ bool AShooterCharacter::GetBeamEndLocation(
 void AShooterCharacter::AiminigButtonPressed()
 {
 	bAimingButtonPressed = true;
-	if (CombatState != ECombatState::ECS_Reloading)
+	if (CombatState != ECombatState::ECS_Reloading &&
+		CombatState != ECombatState::ECS_Equipping)
 	{
 		Aim();
 	}
@@ -1318,6 +1319,11 @@ void AShooterCharacter::ExchangeInventoryItems(int32 CurrentItemIndex, int32 New
 	
 	if (bCanExchangeItems)
 	{		
+		if (bAiming)
+		{
+			StopAiming();
+		}
+
 		auto OldEquippedWeapon = EquippedWeapon;
 		auto NewWeapon = Cast<AWeapon>(Inventory[NewItemIndex]);
 		EquipWeapon(NewWeapon);

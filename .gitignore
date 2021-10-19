@@ -76,11 +76,26 @@ DerivedDataCache/*
 # Purchased or sizeable Asset Store Content 
 _aux/*
 Content/_Game/Assets/*
+Content/A_Surface_Footstep/*
 Content/AnimStarterPack/*
 Content/FPS_Weapon_Bundle/*
+Content/KiteDemo/*
+Content/Lighting
+Content/MobileStarterContent/*
 Content/ParagonLtBelica/*
+Content/ParagonProps/*
 Content/PolygonCity/*
+Content/SampleMap/*
+Content/StarterContent/*
 Content/Z_Extra/*
+
+# Credits:
+# FPS Weapon Bundle - Deadghost Interactive
+# Niagara Footstep VFX - Sidearm Studios
+# POLYGON - City Pack - Synty Studios
+
+# Paragon: Agora and Monolith Environment
+# Paragon: Lt. Belica
 
 # https://www.udemy.com/course/unreal-engine-the-ultimate-shooter-course/
 # Unreal Engine C++ The Ultimate Shooter Course - Stephen Ulibarri

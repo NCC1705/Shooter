@@ -11,6 +11,7 @@ AWeapon::AWeapon()
 	MagazineCapacity(30),
 	WeaponType(EWeaponType::EWT_SubmachineGun),
 	AmmoType(EAmmoType::EAT_9mm),
+	bAutomatic(true),
 	ReloadMontageSection(FName(TEXT("Reload SMG"))),
 	ClipBoneName(TEXT("smg_clip")),
 	SlideDisplacement(0.f),
@@ -77,6 +78,7 @@ void AWeapon::OnConstruction(const FTransform& Transform)
 			CrosshairsBottom = WeaponDataRow->CrosshairsBottom;
 			CrosshairsTop = WeaponDataRow->CrosshairsTop;
 			AutoFireRate = WeaponDataRow->AutoFireRate;
+			bAutomatic = WeaponDataRow->bAutomatic;
 			MuzzleFlash = WeaponDataRow->MuzzleFlash;
 			FireSound = WeaponDataRow->FireSound;
 			BoneToHide = WeaponDataRow->BoneToHide;			

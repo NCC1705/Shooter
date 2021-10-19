@@ -25,8 +25,9 @@ USkeletalMesh* ItemMesh;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 		int32 MagazineCapacity;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-		float AutoFireRate;
-
+		float AutoFireRate;//correlate with curves if weapon has animations
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+		bool bAutomatic;
 
 	// Sound
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
@@ -132,6 +133,8 @@ private://private variables
 	/** Material Index for clearing at weapon type change OnConstruct, otherwise the former dynamic material remains set */
 	int32 PreviousMaterialIndex;
 
+
+
 	/* SPECS private */
 
 		/** Type of Weapon */
@@ -140,17 +143,20 @@ private://private variables
 	/** Type of Ammo used by this Weapon */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Weapon Properties", meta = (AllowPrivateAccess = "true"))
 		EAmmoType AmmoType;
-	/** FName for the Reload Montage section */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Weapon Properties", meta = (AllowPrivateAccess = "true"))
-		FName ReloadMontageSection;
 	/** DataTable for weapon properties */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = DataTable, meta = (AllowPrivateAccess = "true"))
 		UDataTable* WeaponDataTable;
 	/** Automatic fire speed */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = DataTable, meta = (AllowPrivateAccess = "true"))
 		float AutoFireRate;
+	/** True for auto gun fire */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Weapon Properties", meta = (AllowPrivateAccess = "true"))
+	bool bAutomatic;
+
+
 
 	/* UI Crosshair private */
+
 		/** Weapon Crosshairs Textures */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = DataTable, meta = (AllowPrivateAccess = "true"))
 		UTexture2D* CrosshairsMiddle;
@@ -163,20 +169,31 @@ private://private variables
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = DataTable, meta = (AllowPrivateAccess = "true"))
 		UTexture2D* CrosshairsTop;
 
+
+
 	// EFFECTS private
+
 		/** Particle System spawned at the barrel socket*/
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = DataTable, meta = (AllowPrivateAccess = "true"))
 		class UParticleSystem* MuzzleFlash;
+
+
 
 	// SOUND private
 		/** Sound played when the weapon is fired */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = DataTable, meta = (AllowPrivateAccess = "true"))
 		class USoundCue* FireSound;
 
+
+
 	// ANIMATION private
-		/** Name of the bone to hi */
+
+	/** Name of the bone to hide */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = DataTable, meta = (AllowPrivateAccess = "true"))
 		FName BoneToHide;
+	/** FName for the Reload Montage section */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Weapon Properties", meta = (AllowPrivateAccess = "true"))
+		FName ReloadMontageSection;
 	// Pistol animation variables
 	// Amount that the pistol slide is pushed back during firing
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Pistol, meta = (AllowPrivateAccess = "true"))
@@ -229,7 +246,9 @@ public://getters setters
 	FORCEINLINE float GetAutoFireRate() const { return AutoFireRate; }
 	FORCEINLINE UParticleSystem* GetMuzzleFlash() const { return MuzzleFlash; }
 	FORCEINLINE USoundCue* GetFireSound() const { return FireSound; }
-	
+	FORCEINLINE bool GetAutomatic() const { return bAutomatic; }
+
+
 	/* ANIMATION */
 	void StartSlideTimer();
 };
