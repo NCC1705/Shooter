@@ -76,11 +76,12 @@ DerivedDataCache/*
 # Purchased or sizeable Asset Store Content 
 _aux/*
 Content/_Game/Assets/*
+Content/_Game/Paragon/*
 Content/A_Surface_Footstep/*
 Content/AnimStarterPack/*
 Content/FPS_Weapon_Bundle/*
 Content/KiteDemo/*
-Content/Lighting
+Content/Lighting/*
 Content/MobileStarterContent/*
 Content/ParagonLtBelica/*
 Content/ParagonProps/*
