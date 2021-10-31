@@ -18,6 +18,8 @@
 #include "Components/BoxComponent.h"//for weapon equip disable collision
 #include "Components/CapsuleComponent.h"
 #include "Ammo.h"
+#include "PhysicalMaterials/PhysicalMaterial.h"
+#include "Shooter.h"
 //DEBUG
 #include "Misc/DateTime.h"
 #include "Misc/Timespan.h"
@@ -1364,6 +1366,28 @@ void AShooterCharacter::HighlightInventorySlot()
 	const int32 EmptySlot{ GetEmptyInventorySlot() };
 	HighlightIconDelegate.Broadcast(EmptySlot, true);
 	HighlightedSlot = EmptySlot;
+}
+void AShooterCharacter::Footstep()
+{
+	FHitResult HitResult;
+	const FVector Start{ GetActorLocation() };
+	const FVector End{ Start + FVector(0.f,0.f,-400.0f) };
+	FCollisionQueryParams CollisionQueryParams;
+	CollisionQueryParams.bReturnPhysicalMaterial = true;
+
+	GetWorld()->LineTraceSingleByChannel(HitResult, Start, End, ECollisionChannel::ECC_Visibility, CollisionQueryParams);
+	if (HitResult.Actor != nullptr)
+	{
+		//UE_LOG(LogTemp, Warning, TEXT("Hit Actor: %s"), *HitResult.GetActor()->GetName());
+		//since this is an FString that GetName() returns, we need to use the operator overload for the * Asterisk whihch returns 
+		//a C style character array string
+
+		auto HitSurface = HitResult.PhysMaterial->SurfaceType;
+		if (HitSurface == EPS_Grass)
+		{
+			UE_LOG(LogTemp, Warning, TEXT("Hit Grass surface type"));
+		}
+	}
 }
 void AShooterCharacter::UnhighlightInventorySlot()
 {

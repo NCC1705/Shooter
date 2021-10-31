@@ -162,7 +162,8 @@ protected:
 	int32 GetEmptyInventorySlot();
 	void HighlightInventorySlot();
 	
-
+	UFUNCTION(BlueprintCallable)
+	void Footstep();//determine the type of surface we are standing on
 
 /* AMMO protected */
 

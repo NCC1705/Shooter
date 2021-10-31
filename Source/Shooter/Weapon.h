@@ -13,9 +13,9 @@ USTRUCT(BlueprintType)
 struct FWeaponDataTable : public FTableRowBase
 {
 	GENERATED_BODY()//get all built in reflection code generated
-//
-UPROPERTY(EditAnywhere, BlueprintReadWrite)
-USkeletalMesh* ItemMesh;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	USkeletalMesh* ItemMesh;
 
 	//Weapon Specs
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
