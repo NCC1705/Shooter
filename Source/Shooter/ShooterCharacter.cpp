@@ -1367,7 +1367,7 @@ void AShooterCharacter::HighlightInventorySlot()
 	HighlightIconDelegate.Broadcast(EmptySlot, true);
 	HighlightedSlot = EmptySlot;
 }
-void AShooterCharacter::Footstep()
+EPhysicalSurface AShooterCharacter::GetFootstepSurfaceType()
 {
 	FHitResult HitResult;
 	const FVector Start{ GetActorLocation() };
@@ -1382,13 +1382,21 @@ void AShooterCharacter::Footstep()
 		//since this is an FString that GetName() returns, we need to use the operator overload for the * Asterisk whihch returns 
 		//a C style character array string
 
-		auto HitSurface = HitResult.PhysMaterial->SurfaceType;
+		return UPhysicalMaterial::DetermineSurfaceType(HitResult.PhysMaterial.Get());
+		//smart pointer TWeakObjectPtr struct - wrapper to hold a pointer 
+		//Get() gets the value of the pointer
+		//operator->() arrow operator is overloaded to dereference the pointer using the arrow operator 
+		//as if it's a regular pointer, but it's a struct
+
+		/*auto HitSurface = HitResult.PhysMaterial->SurfaceType;		
 		if (HitSurface == EPS_Grass)
 		{
 			UE_LOG(LogTemp, Warning, TEXT("Hit Grass surface type"));
-		}
+		}*/
 	}
+	return EPhysicalSurface();
 }
+
 void AShooterCharacter::UnhighlightInventorySlot()
 {
 	HighlightIconDelegate.Broadcast(HighlightedSlot, false);
