@@ -1314,7 +1314,7 @@ void AShooterCharacter::ExchangeInventoryItems(int32 CurrentItemIndex, int32 New
 	const bool bCanExchangeItems =
 		CurrentItemIndex != NewItemIndex &&
 		NewItemIndex < Inventory.Num() &&
-		CombatState == ECombatState::ECS_Unoccupied;
+		CombatState == ECombatState::ECS_Unoccupied;	
 
 		//(CombatState == ECombatState::ECS_Unoccupied || CombatState == ECombatState::ECS_Equipping);
 		//for fast change while equipping - I don't like it, looks buggy
