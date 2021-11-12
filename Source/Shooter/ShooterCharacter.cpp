@@ -21,6 +21,7 @@
 #include "PhysicalMaterials/PhysicalMaterial.h"
 #include "Shooter.h"
 #include "BulletHitInterface.h"
+#include "Enemy.h"
 //DEBUG
 #include "Misc/DateTime.h"
 #include "Misc/Timespan.h"
@@ -718,6 +719,32 @@ void AShooterCharacter::SendBullet()
 				if (BulletHitInterface)
 				{
 					BulletHitInterface->BulletHit_Implementation(BeamHitResult);
+				}
+				AEnemy* HitEnemy = Cast<AEnemy>(BeamHitResult.GetActor());
+				if (HitEnemy)
+				{
+					if(BeamHitResult.BoneName.ToString() == HitEnemy->GetHeadBoneName())
+					{
+						//head shot
+						UGameplayStatics::ApplyDamage(
+							BeamHitResult.GetActor(),
+							EquippedWeapon->GetHeadShotDamage(),
+							GetController(),
+							this,
+							UDamageType::StaticClass());
+					}
+					else
+					{
+						//body shot
+						UGameplayStatics::ApplyDamage(
+							BeamHitResult.GetActor(),
+							EquippedWeapon->GetDamage(),
+							GetController(),
+							this,
+							UDamageType::StaticClass());
+					}				
+					
+					//UE_LOG(LogTemp, Warning, TEXT("Hit component: %s"), *BeamHitResult.BoneName.ToString());
 				}
 			}
 			else

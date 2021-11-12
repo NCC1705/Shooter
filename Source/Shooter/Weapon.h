@@ -28,6 +28,10 @@ struct FWeaponDataTable : public FTableRowBase
 		float AutoFireRate;//correlate with curves if weapon has animations
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 		bool bAutomatic;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+		float Damage;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+		float HeadShotDamage;
 
 	// Sound
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
@@ -152,8 +156,12 @@ private://private variables
 	/** True for auto gun fire */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Weapon Properties", meta = (AllowPrivateAccess = "true"))
 	bool bAutomatic;
-
-
+	/** Amount of damage caused by a bullet */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Weapon Properties", meta = (AllowPrivateAccess = "true"))
+	float Damage;
+	/** Amount of damage caused by a bullet when it hits the head*/
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Weapon Properties", meta = (AllowPrivateAccess = "true"))
+	float HeadShotDamage;
 
 	/* UI Crosshair private */
 
@@ -247,7 +255,8 @@ public://getters setters
 	FORCEINLINE UParticleSystem* GetMuzzleFlash() const { return MuzzleFlash; }
 	FORCEINLINE USoundCue* GetFireSound() const { return FireSound; }
 	FORCEINLINE bool GetAutomatic() const { return bAutomatic; }
-
+	FORCEINLINE float GetDamage() const { return Damage; }
+	FORCEINLINE float GetHeadShotDamage() const { return HeadShotDamage; }
 
 	/* ANIMATION */
 	void StartSlideTimer();

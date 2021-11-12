@@ -2,6 +2,9 @@
 
 
 #include "Explosive.h"
+#include "Kismet/GameplayStatics.h"
+#include "Sound/SoundCue.h"
+#include "Particles/ParticleSystemComponent.h"
 
 // Sets default values
 AExplosive::AExplosive()
@@ -23,5 +26,22 @@ void AExplosive::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
+}
+
+void AExplosive::BulletHit_Implementation(FHitResult HitResult)
+{
+	if (ExplodeSound)
+	{
+		UGameplayStatics::PlaySoundAtLocation(this, ExplodeSound, GetActorLocation());
+	}
+
+	if (ExplodeParticles)
+	{
+		UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), ExplodeParticles, HitResult.Location, FRotator(0.f), true);
+	}
+
+	// TODO: Apply explosive damage
+
+	Destroy();
 }
 

@@ -79,9 +79,11 @@ void AWeapon::OnConstruction(const FTransform& Transform)
 			CrosshairsTop = WeaponDataRow->CrosshairsTop;
 			AutoFireRate = WeaponDataRow->AutoFireRate;
 			bAutomatic = WeaponDataRow->bAutomatic;
+			Damage = WeaponDataRow->Damage;
+			HeadShotDamage = WeaponDataRow->HeadShotDamage;
 			MuzzleFlash = WeaponDataRow->MuzzleFlash;
 			FireSound = WeaponDataRow->FireSound;
-			BoneToHide = WeaponDataRow->BoneToHide;			
+			BoneToHide = WeaponDataRow->BoneToHide;				
 		}
 
 		if (GetMaterialInstance())//copied from Item.cpp OnConstruction
