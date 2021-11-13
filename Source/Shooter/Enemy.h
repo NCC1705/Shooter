@@ -30,6 +30,18 @@ protected:
 	
 	void Die();
 
+	void PlayHitMontage(FName Section, float PlayRate=1.0f);//default value means you dont need to pass it
+
+	void ResetHitReactTimer();
+
+	UFUNCTION(BlueprintCallable)
+		void StoreHitNumber(UUserWidget* HitNumber, FVector Location);
+	
+	UFUNCTION()//to bind a function that has input parameters to a timer it needs to be UFUNCTION
+	void DestroyHitNumber(UUserWidget* HitNumber);
+
+	void UpdateHitNumbers();
+
 private:
 
 	/** Particles to spawn when hit by bullets */
@@ -66,6 +78,29 @@ private:
 
 	FTimerHandle HealthBarTimer;
 
+	/** Montage containing Hit and Deat animations */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Combat, meta = (AllowPrivateAccess = "true"))
+	UAnimMontage* HitMontage;
+
+	FTimerHandle HitReactTimer;
+	bool bCanHitReact;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Combat, meta = (AllowPrivateAccess = "true"))
+	float HitReactTimeMin;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Combat, meta = (AllowPrivateAccess = "true"))
+	float HitReactTimeMax;
+	/** Map to store HitNumber widgets and their hit locations */
+	UPROPERTY(VisibleAnywhere, Category = Combat, meta = (AllowPrivateAccess = "true"))
+	TMap<UUserWidget*, FVector> HitNumbers;
+
+	/** Time before a hitnumber is removed from the screen */
+	UPROPERTY(EditAnywhere, Category = Combat, meta = (AllowPrivateAccess = "true"))
+		float HitNumberDestroyTime;
+
+	/** Behavior tree for the AI character */
+	UPROPERTY(EditAnywhere, Category = "Behavior Tree", meta = (AllowPrivateAccess = "true"))
+	class UBehaviorTree* BehaviorTree;
+
+
 public:	
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
@@ -78,4 +113,9 @@ public:
 	virtual float TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser) override;
 	
 	FORCEINLINE FString GetHeadBoneName() const { return HeadBoneName; }
+
+	UFUNCTION(BlueprintImplementableEvent)
+	void ShowHitNumber(int Damage,FVector HitLocation,bool bHeadShot);
+
+	FORCEINLINE UBehaviorTree* GetBehaviorTree() const { return BehaviorTree; }
 };
