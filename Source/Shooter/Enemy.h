@@ -42,6 +42,16 @@ protected:
 
 	void UpdateHitNumbers();
 
+	/** Called when something overlaps with the AgroSphere */
+	UFUNCTION()//otherwise it wont work with the overlap event
+	void AgroSphereOverlap(
+		UPrimitiveComponent* OverlappedComponent,
+		AActor* OtherActor,
+		UPrimitiveComponent* OtherComp,
+		int32 OtherBodyIndex,
+		bool bFromSweep,
+		const FHitResult& SweepResult);
+
 private:
 
 	/** Particles to spawn when hit by bullets */
@@ -99,6 +109,20 @@ private:
 	/** Behavior tree for the AI character */
 	UPROPERTY(EditAnywhere, Category = "Behavior Tree", meta = (AllowPrivateAccess = "true"))
 	class UBehaviorTree* BehaviorTree;
+
+	/** Point for the enemy to move to */
+	UPROPERTY(EditAnywhere, Category = "Behavior Tree", meta = (AllowPrivateAccess = "true", MakeEditWidget = "true"))
+		FVector PatrolPoint;//relative to character; MakeEditWidget makes it local???
+
+	/** Point for the enemy to move to */
+	UPROPERTY(EditAnywhere, Category = "Behavior Tree", meta = (AllowPrivateAccess = "true", MakeEditWidget = "true"))
+		FVector PatrolPoint2;//relative to character; MakeEditWidget makes it local???
+
+	class AEnemyController* EnemyController;
+
+	/** Overlap shpere for when the enemy becomes hostile */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Combat, meta = (AllowPrivateAccess = "true"))
+		class USphereComponent* AgroSphere;
 
 
 public:	

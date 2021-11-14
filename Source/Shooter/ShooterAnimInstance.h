@@ -27,6 +27,7 @@ class SHOOTER_API UShooterAnimInstance : public UAnimInstance
 	
 public:
 	UShooterAnimInstance();
+
 	UFUNCTION(BlueprintCallable)
 	void UpdateAnimationProperties(float DeltaTime);//tick function for actor classes
 
