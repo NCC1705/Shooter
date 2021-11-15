@@ -52,6 +52,35 @@ protected:
 		bool bFromSweep,
 		const FHitResult& SweepResult);
 
+	UFUNCTION(BlueprintCallable)
+	void SetStunned(bool Stunned);
+
+	/** Called when something overlaps with the CombatSphere */
+	UFUNCTION()//otherwise it wont work with the overlap event
+		void CombatRangeOverlap(
+			UPrimitiveComponent* OverlappedComponent,
+			AActor* OtherActor,
+			UPrimitiveComponent* OtherComp,
+			int32 OtherBodyIndex,
+			bool bFromSweep,
+			const FHitResult& SweepResult);
+
+	UFUNCTION()//otherwise it wont work with the overlap event
+	void CombatRangeEndOverlap(
+		UPrimitiveComponent* OverlappedComponent,
+		AActor* OtherActor,
+		UPrimitiveComponent* OtherComp,
+		int32 OtherBodyIndex);
+
+
+	UFUNCTION(BlueprintCallable)	
+	void PlayAttackMontage(FName Section, float PlayRate = 1.0f);//default value means you dont need to pass it
+
+	//doesnt need input execution pin as a node, just a function node that performs a quick calculation and returns a result	
+	UFUNCTION(BlueprintPure)
+	FName GetAttackSectionName();
+	
+
 private:
 
 	/** Particles to spawn when hit by bullets */
@@ -124,6 +153,29 @@ private:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Combat, meta = (AllowPrivateAccess = "true"))
 		class USphereComponent* AgroSphere;
 
+	/** True when playing the get hit animation */
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = Combat, meta = (AllowPrivateAccess = "true"))
+		bool bStunned;
+
+	/** Chance of being stunned 0: no stun chance, 1: 100% stun chance*/
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Combat, meta = (AllowPrivateAccess = "true"))
+		float StunChance;
+
+	/** True when in attack range */
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = Combat, meta = (AllowPrivateAccess = "true"))
+		bool bInAttackRange;
+	/** Sphere for attack range */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Combat, meta = (AllowPrivateAccess = "true"))
+		USphereComponent* CombatRangeSphere;
+
+	/** Montage containing attack animations */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Combat, meta = (AllowPrivateAccess = "true"))
+		UAnimMontage* AttackMontage;
+
+	/** The 4 attack montage section names */
+	FName Attack_LFast, Attack_RFast, Attack_L, Attack_R;
+
+
 
 public:	
 	// Called every frame
@@ -142,4 +194,11 @@ public:
 	void ShowHitNumber(int Damage,FVector HitLocation,bool bHeadShot);
 
 	FORCEINLINE UBehaviorTree* GetBehaviorTree() const { return BehaviorTree; }
+	FORCEINLINE UAnimMontage* GetAttackMontage() const { return AttackMontage; }
+
+
+	//C++ AI	
+
+	void PlayAttackMontageC();
+	
 };

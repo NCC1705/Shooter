@@ -12,6 +12,7 @@
 #include "BehaviorTree/BlackboardComponent.h"
 #include "Components/SphereComponent.h"
 #include "ShooterCharacter.h"
+#include "Components/CapsuleComponent.h"
 // Sets default values
 AEnemy::AEnemy():
 	Health(100.f),
@@ -20,14 +21,24 @@ AEnemy::AEnemy():
 	bCanHitReact(true),
 	HitReactTimeMin(.5f),
 	HitReactTimeMax(1.f),
-	HitNumberDestroyTime(1.5f)
+	HitNumberDestroyTime(1.5f),
+	bStunned(false),
+	StunChance(.5f),
+	Attack_LFast(TEXT("Attack_LFast")), 
+	Attack_RFast(TEXT("Attack_RFast")), 
+	Attack_L(TEXT("Attack_L")), 
+	Attack_R(TEXT("Attack_R"))
 {
  	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 
-	//create the AgroSphere
+	// create the AgroSphere
 	AgroSphere = CreateDefaultSubobject<USphereComponent>(TEXT("AgroSphere"));
 	AgroSphere->SetupAttachment(GetRootComponent());
+
+	// create the CombatRangeSphere
+	CombatRangeSphere = CreateDefaultSubobject<USphereComponent>(TEXT("CombatRangeSphere"));
+	CombatRangeSphere->SetupAttachment(GetRootComponent());
 }
 
 // Called when the game starts or when spawned
@@ -36,9 +47,14 @@ void AEnemy::BeginPlay()
 	Super::BeginPlay();
 
 	AgroSphere->OnComponentBeginOverlap.AddDynamic(this, &AEnemy::AgroSphereOverlap);
+	CombatRangeSphere->OnComponentBeginOverlap.AddDynamic(this, &AEnemy::CombatRangeOverlap);
+	CombatRangeSphere->OnComponentEndOverlap.AddDynamic(this, &AEnemy::CombatRangeEndOverlap);
 
 	GetMesh()->SetCollisionResponseToChannel(ECollisionChannel::ECC_Visibility, ECollisionResponse::ECR_Block);
-	
+	GetMesh()->SetCollisionResponseToChannel(ECollisionChannel::ECC_Camera, ECollisionResponse::ECR_Ignore);
+	GetCapsuleComponent()->SetCollisionResponseToChannel(ECollisionChannel::ECC_Camera, ECollisionResponse::ECR_Ignore);
+
+
 	//Get the AI controller
 	EnemyController = Cast<AEnemyController>(GetController());
 	//converts from local/relative to world space
@@ -81,7 +97,7 @@ void AEnemy::PlayHitMontage(FName Section, float PlayRate)
 	if (bCanHitReact)
 	{
 		UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
-		if (AnimInstance)
+		if (AnimInstance && HitMontage)//HitMontage check added by me
 		{
 			AnimInstance->Montage_Play(HitMontage, PlayRate);
 			AnimInstance->Montage_JumpToSection(Section, HitMontage);
@@ -146,18 +162,95 @@ void AEnemy::AgroSphereOverlap(
 	bool bFromSweep, 
 	const FHitResult& SweepResult)
 {
-	if (OtherActor == nullptr) return;
+	if (OtherActor == nullptr) return;//assymetry if null return vs if(otheractor)
 
-	auto Character = Cast<AShooterCharacter>(OtherActor);
+	auto ShooterCharacter = Cast<AShooterCharacter>(OtherActor);
 
-	if (Character)
+	if (ShooterCharacter)
 	{
 		//set the value of the target blackboard key
-		EnemyController->GetBlackboardComponent()->SetValueAsObject(TEXT("Target"), Character);		
+		EnemyController->GetBlackboardComponent()->SetValueAsObject(TEXT("Target"), ShooterCharacter);		
 	}
+}
+
+void AEnemy::SetStunned(bool Stunned)
+{
+	bStunned = Stunned;
+	if (EnemyController)
+	{
+		EnemyController->GetBlackboardComponent()->SetValueAsBool(TEXT("Stunned"), Stunned);
+	}	
+}
+
+void AEnemy::CombatRangeOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
+{
+	if (OtherActor == nullptr) return;
 	
+	auto ShooterCharacter = Cast<AShooterCharacter>(OtherActor);
 
+	if (ShooterCharacter)
+	{
+		bInAttackRange = true;
+		if (EnemyController)
+		{
+			EnemyController->GetBlackboardComponent()->SetValueAsBool(TEXT("InAttackRange"), true);
+		}
+	}	
+}
 
+void AEnemy::CombatRangeEndOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
+{
+	if (OtherActor == nullptr) return;
+
+	auto ShooterCharacter = Cast<AShooterCharacter>(OtherActor);
+
+	if (ShooterCharacter)
+	{
+		bInAttackRange = false;
+		if (EnemyController)
+		{
+			EnemyController->GetBlackboardComponent()->SetValueAsBool(TEXT("InAttackRange"), false);
+		}
+	}
+}
+
+void AEnemy::PlayAttackMontage(FName Section, float PlayRate)
+{
+	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
+	if (AnimInstance && AttackMontage)
+	{
+		AnimInstance->Montage_Play(AttackMontage, PlayRate);
+		AnimInstance->Montage_JumpToSection(Section, AttackMontage);
+	}
+}
+
+FName AEnemy::GetAttackSectionName()
+{
+	//Attack_LFast, Attack_RFast, Attack_L, Attack_R;
+	FName SectionName;
+	const int32 Section{ FMath::RandRange(0,3) };
+	switch (Section)
+	{
+
+	case 0:
+		SectionName = Attack_LFast;
+			break;
+	case 1:
+		SectionName = Attack_RFast;
+			break;
+	case 2:
+		SectionName = Attack_L;
+			break;
+	case 3:
+		SectionName = Attack_R;
+			break;
+	default:
+		SectionName = Attack_LFast;
+		break;
+	}
+	return SectionName;
+
+	//return FName();
 }
 
 // Called every frame
@@ -187,7 +280,15 @@ void AEnemy::BulletHit_Implementation(FHitResult HitResult)
 		UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), ImpactParticles, HitResult.Location, FRotator(0.f), true);
 	}
 	ShowHealthBar();
-	PlayHitMontage(FName("HitReact_Front"));
+
+	//ddtermine if bullet hit stuns
+	const float Stunned = FMath::FRandRange(0.f, 1.f);
+	if (Stunned <= StunChance)
+	{
+		// stun the enemy		
+		PlayHitMontage(FName("HitReact_Front"));
+		SetStunned(true);
+	}
 }
 
 float AEnemy::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser)
@@ -203,5 +304,15 @@ float AEnemy::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, AC
 	}
 		
 	return DamageAmount; //0.0f;
+}
+
+
+
+
+// C++ AI
+
+void AEnemy::PlayAttackMontageC()
+{
+	PlayAttackMontage(GetAttackSectionName());
 }
 
