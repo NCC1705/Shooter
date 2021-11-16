@@ -16,6 +16,7 @@ enum class ECombatState :uint8
 	ECS_FireTimerInProgress UMETA(DisplayName = "FireTimerInProgress"),
 	ECS_Reloading UMETA(DisplayName = "Reloading"),
 	ECS_Equipping UMETA(DisplayName = "Equipping"),
+	ECS_Stunned UMETA(DisplayName = "Stunned"),
 
 	ECS_MAX UMETA(DisplayName = "DefaultMAX")
 };
@@ -46,6 +47,19 @@ public:
 
 	// Sets default values for this character's properties
 	AShooterCharacter();
+	//Take combat damage
+	virtual float TakeDamage(
+		float DamageAmount,
+		struct FDamageEvent const& DamageEvent,
+		class AController* EventInstigator,
+		AActor* DamageCauser) override;
+
+	// Called every frame
+	virtual void Tick(float DeltaTime) override;
+
+	// Called to bind functionality to input
+	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;//forward declare
+
 
 protected:
 
@@ -87,7 +101,9 @@ protected:
 	*/
 	void LookUp(float Value);
 
-
+/* ANIMATION protected */
+	UFUNCTION(BlueprintCallable)
+	void EndStun();
 
 /*  AIM & FIRE protected */
 
@@ -133,6 +149,7 @@ protected:
 	void StopAiming();
 	
 
+
 /* EQUIP protected */
 
 	/** Trace for items if OverlappedItemCount >0 */
@@ -165,6 +182,7 @@ protected:
 	UFUNCTION(BlueprintCallable)
 	EPhysicalSurface GetFootstepSurfaceType();//determine the type of surface we are standing on
 	
+
 /* AMMO protected */
 
 	/** Initialize the Ammo Map with ammo values */
@@ -175,16 +193,8 @@ protected:
 	bool CarryingAmmo();
 
 
-public:
-	// Called every frame
-	virtual void Tick(float DeltaTime) override;
-
-	// Called to bind functionality to input
-	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;//forward declare
-
+	
 private:
-
-
 
 /* CAMERA private */
 
@@ -282,8 +292,14 @@ private:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Combat, meta = (AllowPrivateAccess = "true"))
 	UParticleSystem* BeamParticles;
 
-	
-	
+	/** Sound when melee hit */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Combat, meta = (AllowPrivateAccess = "true"))
+	class USoundCue* MeleeImpactSound;
+
+	/** Blood splatter particles for melee hit */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Combat, meta = (AllowPrivateAccess = "true"))
+	UParticleSystem* BloodParticles;
+
 /* ANIMATION private */
 
 	/** Montage for firing the weapon */
@@ -305,6 +321,10 @@ private:
 	UAnimMontage* EquipMontage;
 	UFUNCTION(BlueprintCallable)
 	void FinishEquipping();
+
+	/* HitReact anim montage for when character is stunned */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Combat, meta = (AllowPrivateAccess = "true"))
+	UAnimMontage* HitReactMontage;
 
 /* AIM & FIRE private */
 
@@ -439,7 +459,13 @@ private:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Combat, meta = (AllowPrivateAccess = "true"))//Set from C++
 	ECombatState CombatState;
 
+	/** Character health */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Combat, meta = (AllowPrivateAccess = "true"))
+	float Health;
 
+	/** Character max health */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Combat, meta = (AllowPrivateAccess = "true"))
+	float MaxHealth;
 
 
 
@@ -498,4 +524,12 @@ public:
 	void StartEquipSoundTimer();
 	void UnhighlightInventorySlot();
 	FORCEINLINE AWeapon* GetEquippedWeapon()const { return EquippedWeapon; }
+
+/* EFFECTS public */
+
+	FORCEINLINE USoundCue* GetMeleeImpactSound()const { return MeleeImpactSound; }
+	FORCEINLINE UParticleSystem* GetBloodParticles() const { return BloodParticles; }
+
+/* Animation public */
+	void Stun();
 };

@@ -13,6 +13,9 @@
 #include "Components/SphereComponent.h"
 #include "ShooterCharacter.h"
 #include "Components/CapsuleComponent.h"
+#include "Components/BoxComponent.h"
+#include "Engine/SkeletalMeshSocket.h"
+
 // Sets default values
 AEnemy::AEnemy():
 	Health(100.f),
@@ -27,7 +30,10 @@ AEnemy::AEnemy():
 	Attack_LFast(TEXT("Attack_LFast")), 
 	Attack_RFast(TEXT("Attack_RFast")), 
 	Attack_L(TEXT("Attack_L")), 
-	Attack_R(TEXT("Attack_R"))
+	Attack_R(TEXT("Attack_R")),
+	BaseDamage(20.f),
+	LeftWeaponSocket(TEXT("FX_Trail_L_01")),
+	RightWeaponSocket(TEXT("FX_Trail_R_01"))
 {
  	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
@@ -39,6 +45,15 @@ AEnemy::AEnemy():
 	// create the CombatRangeSphere
 	CombatRangeSphere = CreateDefaultSubobject<USphereComponent>(TEXT("CombatRangeSphere"));
 	CombatRangeSphere->SetupAttachment(GetRootComponent());
+
+	//construct left and right collision boxes
+	WeaponLeftCollision = CreateDefaultSubobject<UBoxComponent>(TEXT("WeaponLeftCollision"));
+	WeaponLeftCollision->SetupAttachment(GetMesh(), FName("WeaponLeftSocket"));
+
+	WeaponRightCollision = CreateDefaultSubobject<UBoxComponent>(TEXT("WeaponRightCollision"));
+	WeaponRightCollision->SetupAttachment(GetMesh(), FName("WeaponRightSocket"));
+
+
 }
 
 // Called when the game starts or when spawned
@@ -46,9 +61,26 @@ void AEnemy::BeginPlay()
 {
 	Super::BeginPlay();
 
-	AgroSphere->OnComponentBeginOverlap.AddDynamic(this, &AEnemy::AgroSphereOverlap);
-	CombatRangeSphere->OnComponentBeginOverlap.AddDynamic(this, &AEnemy::CombatRangeOverlap);
-	CombatRangeSphere->OnComponentEndOverlap.AddDynamic(this, &AEnemy::CombatRangeEndOverlap);
+	AgroSphere->OnComponentBeginOverlap.AddDynamic(this, &AEnemy::OnAgroSphereOverlap);
+
+	CombatRangeSphere->OnComponentBeginOverlap.AddDynamic(this, &AEnemy::OnCombatRangeOverlap);
+	CombatRangeSphere->OnComponentEndOverlap.AddDynamic(this, &AEnemy::OnCombatRangeEndOverlap);
+
+	//Bind functions to overlap events for weapon boxes
+	WeaponLeftCollision->OnComponentBeginOverlap.AddDynamic(this, &AEnemy::OnWeaponLeftOverlap);
+	WeaponRightCollision->OnComponentBeginOverlap.AddDynamic(this, &AEnemy::OnWeaponRightOverlap);
+	//Set collision presets for weapon boxes
+	WeaponLeftCollision->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	WeaponLeftCollision->SetCollisionObjectType(ECollisionChannel::ECC_WorldDynamic);
+	WeaponLeftCollision->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Ignore);
+	WeaponLeftCollision->SetCollisionResponseToChannel(ECollisionChannel::ECC_Pawn, ECollisionResponse::ECR_Overlap);
+
+	WeaponRightCollision->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	WeaponRightCollision->SetCollisionObjectType(ECollisionChannel::ECC_WorldDynamic);
+	WeaponRightCollision->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Ignore);
+	WeaponRightCollision->SetCollisionResponseToChannel(ECollisionChannel::ECC_Pawn, ECollisionResponse::ECR_Overlap);
+
+
 
 	GetMesh()->SetCollisionResponseToChannel(ECollisionChannel::ECC_Visibility, ECollisionResponse::ECR_Block);
 	GetMesh()->SetCollisionResponseToChannel(ECollisionChannel::ECC_Camera, ECollisionResponse::ECR_Ignore);
@@ -154,13 +186,7 @@ void AEnemy::UpdateHitNumbers()
 
 }
 
-void AEnemy::AgroSphereOverlap(
-	UPrimitiveComponent* OverlappedComponent, 
-	AActor* OtherActor, 
-	UPrimitiveComponent* OtherComp, 
-	int32 OtherBodyIndex, 
-	bool bFromSweep, 
-	const FHitResult& SweepResult)
+void AEnemy::OnAgroSphereOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
 	if (OtherActor == nullptr) return;//assymetry if null return vs if(otheractor)
 
@@ -169,7 +195,7 @@ void AEnemy::AgroSphereOverlap(
 	if (ShooterCharacter)
 	{
 		//set the value of the target blackboard key
-		EnemyController->GetBlackboardComponent()->SetValueAsObject(TEXT("Target"), ShooterCharacter);		
+		EnemyController->GetBlackboardComponent()->SetValueAsObject(TEXT("Target"), ShooterCharacter);
 	}
 }
 
@@ -182,10 +208,10 @@ void AEnemy::SetStunned(bool Stunned)
 	}	
 }
 
-void AEnemy::CombatRangeOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
+void AEnemy::OnCombatRangeOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
 	if (OtherActor == nullptr) return;
-	
+
 	auto ShooterCharacter = Cast<AShooterCharacter>(OtherActor);
 
 	if (ShooterCharacter)
@@ -195,10 +221,10 @@ void AEnemy::CombatRangeOverlap(UPrimitiveComponent* OverlappedComponent, AActor
 		{
 			EnemyController->GetBlackboardComponent()->SetValueAsBool(TEXT("InAttackRange"), true);
 		}
-	}	
+	}
 }
 
-void AEnemy::CombatRangeEndOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
+void AEnemy::OnCombatRangeEndOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
 {
 	if (OtherActor == nullptr) return;
 
@@ -252,6 +278,84 @@ FName AEnemy::GetAttackSectionName()
 
 	//return FName();
 }
+
+void AEnemy::DoDamage(AShooterCharacter* Character)//(AActor* OtherActor)
+{
+	//if (Character == nullptr) return;//OtherActor
+	//auto Character = Cast<AShooterCharacter>(OtherActor);
+	//if (Character) {}
+
+	UGameplayStatics::ApplyDamage(
+		Character,
+		BaseDamage,
+		EnemyController,
+		this,//damage causer
+		UDamageType::StaticClass()
+	);
+	if (Character->GetMeleeImpactSound())
+	{
+		UGameplayStatics::PlaySoundAtLocation(this, Character->GetMeleeImpactSound(), GetActorLocation());
+	}
+}
+
+void AEnemy::SpawnBlood(AShooterCharacter* Character, FName SocketName)
+{
+	const USkeletalMeshSocket* TipSocket{ GetMesh()->GetSocketByName(SocketName) };
+	if (TipSocket)
+	{
+		const FTransform SocketTransform{ TipSocket->GetSocketTransform(GetMesh()) };
+		if (Character->GetBloodParticles())
+		{
+			UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), Character->GetBloodParticles(), SocketTransform);
+		}
+	}
+}
+
+void AEnemy::OnWeaponLeftOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
+{
+	auto Character = Cast<AShooterCharacter>(OtherActor);
+	if (Character) 
+	{ 
+		DoDamage(Character); 
+		SpawnBlood(Character, LeftWeaponSocket);		
+	}
+	//DoDamage(OtherActor);
+}
+
+void AEnemy::OnWeaponRightOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
+{	
+	auto Character = Cast<AShooterCharacter>(OtherActor);
+	if (Character) 
+	{ 
+		DoDamage(Character);
+		SpawnBlood(Character, RightWeaponSocket);
+	}
+	//DoDamage(OtherActor);
+}
+
+void AEnemy::ActivateLeftWeapon()//called from blueprints anim notify
+{
+	//QueryOnly generates overlap events but we dont need to collide/physics
+	WeaponLeftCollision->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
+}
+
+void AEnemy::DeactivateLeftWeapon()//called from blueprints anim notify
+{	
+	WeaponLeftCollision->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+}
+
+void AEnemy::ActivateRightWeapon()//called from blueprints anim notify
+{
+	//QueryOnly generates overlap events but we dont need to collide/physics
+	WeaponRightCollision->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
+}
+
+void AEnemy::DeactivateRightWeapon()//called from blueprints anim notify
+{
+	WeaponRightCollision->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+}
+
+
 
 // Called every frame
 void AEnemy::Tick(float DeltaTime)

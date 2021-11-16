@@ -44,7 +44,7 @@ protected:
 
 	/** Called when something overlaps with the AgroSphere */
 	UFUNCTION()//otherwise it wont work with the overlap event
-	void AgroSphereOverlap(
+	void OnAgroSphereOverlap(
 		UPrimitiveComponent* OverlappedComponent,
 		AActor* OtherActor,
 		UPrimitiveComponent* OtherComp,
@@ -57,7 +57,7 @@ protected:
 
 	/** Called when something overlaps with the CombatSphere */
 	UFUNCTION()//otherwise it wont work with the overlap event
-		void CombatRangeOverlap(
+		void OnCombatRangeOverlap(
 			UPrimitiveComponent* OverlappedComponent,
 			AActor* OtherActor,
 			UPrimitiveComponent* OtherComp,
@@ -66,7 +66,7 @@ protected:
 			const FHitResult& SweepResult);
 
 	UFUNCTION()//otherwise it wont work with the overlap event
-	void CombatRangeEndOverlap(
+	void OnCombatRangeEndOverlap(
 		UPrimitiveComponent* OverlappedComponent,
 		AActor* OtherActor,
 		UPrimitiveComponent* OtherComp,
@@ -79,6 +79,38 @@ protected:
 	//doesnt need input execution pin as a node, just a function node that performs a quick calculation and returns a result	
 	UFUNCTION(BlueprintPure)
 	FName GetAttackSectionName();
+	
+	UFUNCTION()
+		void OnWeaponLeftOverlap(
+			UPrimitiveComponent* OverlappedComponent,
+			AActor* OtherActor,
+			UPrimitiveComponent* OtherComp,
+			int32 OtherBodyIndex,
+			bool bFromSweep,
+			const FHitResult& SweepResult);
+
+	UFUNCTION()
+		void OnWeaponRightOverlap(
+			UPrimitiveComponent* OverlappedComponent,
+			AActor* OtherActor,
+			UPrimitiveComponent* OtherComp,
+			int32 OtherBodyIndex,
+			bool bFromSweep,
+			const FHitResult& SweepResult);
+
+	void DoDamage(class AShooterCharacter* Character);//(AActor* OtherActor);//since the left/right sides above do the same thing, own function
+	void SpawnBlood(AShooterCharacter* Character, FName SocketName);
+
+	//BlueprintCallable to call them from blueprints an animation notify to de/activate the collision boxes
+	UFUNCTION(BlueprintCallable)
+	void ActivateLeftWeapon();
+	UFUNCTION(BlueprintCallable)
+	void DeactivateLeftWeapon();
+	UFUNCTION(BlueprintCallable)
+	void ActivateRightWeapon();
+	UFUNCTION(BlueprintCallable)
+	void DeactivateRightWeapon();
+
 	
 
 private:
@@ -110,6 +142,9 @@ private:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Combat, meta = (AllowPrivateAccess = "true"))
 		float MaxHealth;
 
+	/** Base Damage for enemy */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Combat, meta = (AllowPrivateAccess = "true"))
+		float BaseDamage;
 
 	/** Time to display healthbar once shot */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Combat, meta = (AllowPrivateAccess = "true"))
@@ -175,7 +210,19 @@ private:
 	/** The 4 attack montage section names */
 	FName Attack_LFast, Attack_RFast, Attack_L, Attack_R;
 
+	/** Collision volume for the left weapon*/
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = Combat, meta = (AllowPrivateAccess = "true"))
+	class UBoxComponent* WeaponLeftCollision;
 
+	/** Collision volume for the right weapon*/
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = Combat, meta = (AllowPrivateAccess = "true"))
+	UBoxComponent* WeaponRightCollision;
+
+	/** For melee blood splatter */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Combat, meta = (AllowPrivateAccess = "true"))
+	FName LeftWeaponSocket;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Combat, meta = (AllowPrivateAccess = "true"))
+	FName RightWeaponSocket;
 
 public:	
 	// Called every frame

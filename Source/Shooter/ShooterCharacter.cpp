@@ -84,7 +84,9 @@ AShooterCharacter::AShooterCharacter() ://initialize values with an initialize l
 	//Combat variables
 	CombatState(ECombatState::ECS_Unoccupied),
 	//Icon animation property
-	HighlightedSlot(-1)
+	HighlightedSlot(-1),
+	Health(100.0f),
+	MaxHealth(100.0f)
 {
 	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
@@ -135,7 +137,22 @@ AShooterCharacter::AShooterCharacter() ://initialize values with an initialize l
 	AmmoInterpComp2->SetupAttachment(GetFollowCamera());
 }
 
-// Called when the game starts or when spawned
+float AShooterCharacter::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser)
+{
+	if (Health - DamageAmount <= 0.f)
+	{
+		Health = 0;
+		//Die();
+	}
+	else
+	{
+		Health -= DamageAmount;
+	}
+
+	return DamageAmount; 
+}
+
+	// Called when the game starts or when spawned
 void AShooterCharacter::BeginPlay()
 {
 	Super::BeginPlay();
@@ -402,6 +419,17 @@ void AShooterCharacter::LookUp(float Value)
 
 
 
+/* ANIMATION */
+
+void AShooterCharacter::EndStun()
+{
+	CombatState = ECombatState::ECS_Unoccupied;
+	if (bAimingButtonPressed)
+	{
+		Aim();
+	}
+}
+
 /* AIM & FIRE */
 
 void AShooterCharacter::CalculateCrosshairSpread(float DeltaTime)
@@ -540,6 +568,8 @@ void AShooterCharacter::StartFireTimer()
 }
 void AShooterCharacter::AutoFireReset()
 {
+	if (CombatState == ECombatState::ECS_Stunned) return;
+
 	CombatState = ECombatState::ECS_Unoccupied;
 	if (EquippedWeapon == nullptr) return;//check if weapon became null in the meantime
 	if (WeaponHasAmmo())
@@ -641,7 +671,8 @@ void AShooterCharacter::AiminigButtonPressed()
 {
 	bAimingButtonPressed = true;
 	if (CombatState != ECombatState::ECS_Reloading &&
-		CombatState != ECombatState::ECS_Equipping)
+		CombatState != ECombatState::ECS_Equipping &&
+		CombatState != ECombatState::ECS_Stunned)
 	{
 		Aim();
 	}
@@ -669,6 +700,8 @@ void AShooterCharacter::StopAiming()
 		GetCharacterMovement()->MaxWalkSpeed = BaseMovementSpeed;
 	}
 }
+
+
 void AShooterCharacter::CameraInterpZoom(float DeltaTime)
 {
 	//Set current camera field of view1
@@ -939,6 +972,7 @@ void AShooterCharacter::ReloadWeapon()
 }
 void AShooterCharacter::FinishReloading()
 {
+	if (CombatState == ECombatState::ECS_Stunned) return;
 	//Update combat state
 	CombatState = ECombatState::ECS_Unoccupied;
 	if (bAimingButtonPressed)
@@ -981,6 +1015,7 @@ void AShooterCharacter::FinishReloading()
 }
 void AShooterCharacter::FinishEquipping()
 {
+	if (CombatState == ECombatState::ECS_Stunned) return;
 	//Update combat state
 	CombatState = ECombatState::ECS_Unoccupied;
 	if (bAimingButtonPressed)
@@ -1543,6 +1578,8 @@ bool AShooterCharacter::CarryingAmmo()
 
 	return false;
 }
+
+
 
 
 
