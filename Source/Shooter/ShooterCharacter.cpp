@@ -22,6 +22,8 @@
 #include "Shooter.h"
 #include "BulletHitInterface.h"
 #include "Enemy.h"
+#include "EnemyController.h"
+#include "BehaviorTree/BlackboardComponent.h"
 //DEBUG
 #include "Misc/DateTime.h"
 #include "Misc/Timespan.h"
@@ -86,7 +88,9 @@ AShooterCharacter::AShooterCharacter() ://initialize values with an initialize l
 	//Icon animation property
 	HighlightedSlot(-1),
 	Health(100.0f),
-	MaxHealth(100.0f)
+	MaxHealth(100.0f),
+	StunChance(.25f),
+	bDying(false)
 {
 	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
@@ -142,7 +146,12 @@ float AShooterCharacter::TakeDamage(float DamageAmount, FDamageEvent const& Dama
 	if (Health - DamageAmount <= 0.f)
 	{
 		Health = 0;
-		//Die();
+		Die();
+		auto EnemyController = Cast<AEnemyController>(EventInstigator);
+		if (EnemyController)
+		{
+			EnemyController->GetBlackboardComponent()->SetValueAsBool(FName(TEXT("Characterdead")), true);
+		}
 	}
 	else
 	{
@@ -428,6 +437,33 @@ void AShooterCharacter::EndStun()
 	{
 		Aim();
 	}
+}
+
+void AShooterCharacter::Die()
+{
+	//montage was longer than 1 sec and enemy keept hitting and the montage never reached FinishCharacterDeath
+	if (bDying) return;//already dying, abort
+	bDying = true;//first time this is called
+
+	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
+
+	if (AnimInstance && DeathMontage)
+	{
+		AnimInstance->Montage_Play(DeathMontage);
+		//UE_LOG(LogTemp, Warning, TEXT("death"));
+
+	}
+}
+
+void AShooterCharacter::FinishDeath()
+{
+	GetMesh()->bPauseAnims = true;
+	APlayerController* PlayerController = UGameplayStatics::GetPlayerController(this, 0);
+	if (PlayerController)
+	{
+		DisableInput(PlayerController);
+	}
+
 }
 
 /* AIM & FIRE */
@@ -1485,6 +1521,20 @@ void AShooterCharacter::UnhighlightInventorySlot()
 {
 	HighlightIconDelegate.Broadcast(HighlightedSlot, false);
 	HighlightedSlot = -1;
+}
+void AShooterCharacter::Stun()
+{
+	if (Health <= 0)return;
+
+	CombatState = ECombatState::ECS_Stunned;
+	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
+	if (AnimInstance && HitReactMontage)
+	{
+		AnimInstance->Montage_Play(HitReactMontage);//we only have one montage now
+		//AnimInstance->Montage_JumpToSection(FName("BlaBla"));
+
+	}
+
 }
 int32 AShooterCharacter::GetInterpLocationBestIndex()
 {//indexes 1 to 3 for ammo, 0 is for weapon in array

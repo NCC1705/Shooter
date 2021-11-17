@@ -105,6 +105,12 @@ protected:
 	UFUNCTION(BlueprintCallable)
 	void EndStun();
 
+	void Die();
+	UFUNCTION(BlueprintCallable)
+	void FinishDeath();
+
+
+
 /*  AIM & FIRE protected */
 
 	/** Called when the fire button is pressed */
@@ -326,6 +332,16 @@ private:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Combat, meta = (AllowPrivateAccess = "true"))
 	UAnimMontage* HitReactMontage;
 
+	/* Chance of being stunned when hit */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Combat, meta = (AllowPrivateAccess = "true"))
+	float StunChance;
+
+	/* Montage for character death */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Combat, meta = (AllowPrivateAccess = "true"))
+		UAnimMontage* DeathMontage;
+
+	bool bDying;
+
 /* AIM & FIRE private */
 
 	/** True when aiming */
@@ -532,4 +548,5 @@ public:
 
 /* Animation public */
 	void Stun();
+	FORCEINLINE float GetStunChance() const { return StunChance; }
 };
