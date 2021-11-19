@@ -4,13 +4,18 @@ Created by Stephen Ulibarri
 
 
 Assets: 
-1. FPS Weapon Bundle - Deadghost Interactive
-2. Niagara Footstep VFX - Sidearm Studios
-3. POLYGON - City Pack - Synty Studios
+* FPS Weapon Bundle - Deadghost Interactive
+* Niagara Footstep VFX - Sidearm Studios
+* POLYGON - City Pack - Synty Studios
 
 Epic Games:
-4. Paragon: Agora and Monolith Environment
-5. Paragon: Lt. Belica
+* Animation Starter Pack
+* Paragon: Agora and Monolith Environment
+* Paragon: Grux
+* Paragon: Khaimera
+* Paragon: Lt. Belica
+* Paragon: Phase
+* Paragon: Twinblast
 
 
 Full/functional project archive:
